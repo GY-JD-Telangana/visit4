@@ -1,0 +1,1180 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DSE Coverage and Customer Report</title>
+    <style>
+        body {
+            background-color: CornSilk;
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+        }
+
+        form {
+            max-width: 600px;
+            margin: auto;
+            background: white;
+            padding: 20px;
+            border-radius: 5px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+
+        input[type="text"][readonly] {
+            background-color: #f0f0f0; /* Light grey background */
+            cursor: not-allowed; /* Change cursor to indicate non-editable */
+        }
+
+        label {
+            display: block;
+            margin-bottom: 5px;
+        }
+
+        input[type="text"],
+        select {
+            width: 100%;
+            padding: 8px;
+            margin-bottom: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+
+        .name-list {
+            list-style-type: none; /* Remove bullet points */
+            padding: 0; /* Remove padding */
+            margin: 0; /* Remove margin */
+            border: 1px solid #ccc; /* Border around the list */
+            max-height: 150px; /* Max height for the list */
+            overflow-y: auto; /* Scroll if too many items */
+            display: none; /* Initially hidden */
+            background-color: YellowGreen; /* Background color for the list */
+            position: absolute; /* Position it below the input */
+            z-index: 1000; /* Ensure it appears above other elements */
+        }
+
+        .name-list li {
+            padding: 8px; /* Padding for list items */
+            cursor: pointer; /* Pointer cursor for clickable items */
+        }
+
+        .name-list li:hover {
+            background-color: #f0f0f0; /* Highlight on hover */
+        }
+
+        input[type="submit"] {
+            background-color: #28a745;
+            color: white;
+            border: none;
+            padding: 10px;
+            cursor: pointer;
+            border-radius: 4px;
+            transition: background-color 0.3s;
+        }
+
+        input[type="submit"]:hover {
+            background-color: #FFaa00;
+        }
+
+        .radio-group {
+            display: grid; /* Use grid layout */
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); /* Responsive columns */
+            gap: 7px; /* Space between grid items */
+            margin-bottom: 20px; /* Space below the group */
+        }
+
+        .radio-group label {
+            display: flex; /* Align items in a flex container */
+            align-items: center; /* Center items vertically */
+        }
+
+        .radio-group input[type="radio"] {
+            margin-right: 5 px; /* Space between radio button and label */
+        }
+        input[type="text"] {
+            width: 100%;
+            padding: 8px;
+            margin-bottom: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+        .name-list {
+            list-style-type: none; /* Remove bullet points */
+            padding: 0; /* Remove padding */
+            margin: 0; /* Remove margin */
+            border: 1px solid #ccc; /* Border around the list */
+            max-height: 150px; /* Max height for the list */
+            overflow-y: auto; /* Scroll if too many items */
+            display: none; /* Initially hidden */
+            background-color: #90EE90; /* Background color for the suggestion list */
+            position: absolute; /* Position it below the input */
+            z-index: 1000; /* Ensure it appears above other elements */
+        }
+        .name-list li {
+            padding: 8px; /* Padding for list items */
+            cursor: pointer; /* Pointer cursor for clickable items */
+        }
+        .name-list li:hover {
+            background-color: #f0f0f0; /* Highlight on hover */
+        }
+        .error-message {
+            color: red; /* Red color for error message */
+            font-style: italic; /* Italicize the error message */
+            margin-top: 10px; /* Space above the error message */
+        }
+           .input-box {
+            margin-bottom: 10px;
+        }
+        #item-list {
+            list-style-type: none;
+            padding: 0;
+            margin: 0;
+            border: 1px solid #ccc;
+            max-height: 100px;
+            overflow-y: auto;
+            background-color: #e0ffe0; /* Light green background */
+        }
+        #item-list li {
+            padding: 5px;
+            cursor: pointer;
+        }
+        #item-list li:hover {
+            background-color: #b3ffb3; /* Darker green on hover */
+        }
+        #item-error-message {
+            color: red;
+        }
+        
+    </style>
+    <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DSE Coverage and Customer Report</title>
+    
+<script>
+    // Function to get GPS location
+     function getLocation() {
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(showPosition, showError);
+            } else {
+                alert("Geolocation is not supported by this browser.");
+            }
+        }
+
+    // Function to display GPS coordinates in form fields
+    function showPosition(position) {
+        document.getElementById("latitude").value = position.coords.latitude;
+        document.getElementById("longitude").value = position.coords.longitude;
+
+        // Enable the submit button after getting the location
+        document.getElementById("submit-button").disabled = false;
+    }
+
+    // Function to handle geolocation errors
+    function showError(error) {
+        switch (error.code) {
+            case error.PERMISSION_DENIED:
+                alert("User denied the request for Geolocation.");
+                break;
+            case error.POSITION_UNAVAILABLE:
+                alert("Location information is unavailable.");
+                break;
+            case error.TIMEOUT:
+                alert("The request to get user location timed out.");
+                break;
+            case error.UNKNOWN_ERROR:
+                alert("An unknown error occurred.");
+                break;
+        }
+
+        // Keep the submit button disabled if there is an error
+        document.getElementById("submit-button").disabled = true;
+    }
+
+    // Function to detect device type
+    function getDeviceType() {
+        const userAgent = navigator.userAgent || navigator.vendor || window.opera;
+
+        if (/android/i.test(userAgent)) {
+            return 'Android';
+        }
+
+        if (/iPad|iPhone|iPod/.test(userAgent) && !window.MSStream) {
+            return 'iOS';
+        }
+
+        return 'Unknown'; // Default if neither is detected
+    }
+
+    // Function to submit the form data to Google Sheets
+    function submitForm() {
+     const data = {
+      searchName: document.getElementById('search-name').value,
+      purposeOfVisit: document.querySelector('input[name="purpose-of-visit"]:checked')?.value || "",
+      customerName: document.getElementById('customerName').value,
+      contactInfo: document.getElementById('contactInfo').value,
+      searchItem: document.getElementById('search-item').value,
+      inquiry: document.querySelector('input[name="inquiry"]:checked')?.value || "",
+      district: document.getElementById('district').value,
+      subcategory: document.getElementById('subcategory').value,
+      village: document.getElementById('village').value,
+      location: document.getElementById('location').value,
+      latitude: document.getElementById('latitude').value,
+      longitude: document.getElementById('longitude').value,
+      deviceType: getDeviceType()
+    };
+
+    const url = "https://script.google.com/macros/s/AKfycbxtUwjJI_adSrF6voQ62MMjX1i8TGyD1JbB-RdSHys-mP_g94HZr73JQkpFtCHziWMmkQ/exec"; // Replace with your Google Apps Script Web App URL
+
+
+            const submitButton = document.getElementById("submit-button");
+            submitButton.textContent = "Pl wait, uploading data"; // Change button text
+            submitButton.disabled = true; // Disable button
+
+            fetch(url, {
+                method: "POST",
+                mode: "no-cors", // 'no-cors' allows cross-origin requests without CORS headers
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify(data)
+            }).then(response => {
+                alert("Your field visit is now recorded!");
+                submitButton.textContent = "Submit"; // Reset button text
+                submitButton.disabled = false; // Re-enable button
+            }).catch(error => {
+                console.error("Error submitting form:", error);
+                submitButton.textContent = "Submit"; // Reset button text on error
+                submitButton.disabled = false; // Re-enable button
+            });
+        }
+
+    // Call getLocation() on page load
+    window.onload = function() {
+        getLocation();
+        // Disable the submit button initially
+        document.getElementById("submit-button").disabled = true;
+    }
+</script>
+</head>
+<body>
+    <img src="https://logos-world.net/imageup/John_Deere/John_Deere-Logo-PNG3.png" alt="Leaping deer logo" width="120" height="75" style="display: block; margin: 0 auto;">
+    <b><h2 style="text-align:center;">DSE Customer Visit Report</h2></b>
+    <em><h4 style="text-align:center;color:peru;"><mark>Attention:</mark> Fill only when you are at the village</h4></em>
+    <p style="text-align:center;color:peru;">మీరు <b>లొకేషన్</b> ఆన్ చెయ్యక పోయిన (లేదా) లొకేషన్ పర్మిషన్ ఇవ్వక పోయిన "Submit" బటన్ ఆన్ అవ్వదు.</p>
+    <div><p style="text-align:center;color:peru;">లొకేషన్ కి ఎలా పర్మిషన్ ఇవ్వాలో పేజీ కింద ఉన్న వీడియో లో చుడండి </div></p>
+
+    <form onsubmit="event.preventDefault(); submitForm();">
+        <label for="search-name">Select Your Name:</label>
+        <input type="text" id="search-name" placeholder="Type to search..." oninput="filterNames()" autocomplete="off" required>
+        <ul id="name-list" class="name-list"></ul>
+        <div id="error-message" class="error-message"></div> <!-- For displaying error messages -->
+
+        <br>
+
+        <label><b>Purpose of Visit:</b></label>
+        <div class="radio-group">
+                        <label>
+                <input type="radio" id="EnqGeneration" name="purpose-of-visit" value="Enq Generation" required>
+                Enq Generation
+            </label>
+            <label>
+                <input type="radio" id="visitEnqFollowup" name="purpose-of-visit" value="Enq followup" required>
+                Enq followup
+            </label>
+            <label>
+                <input type="radio" id="visitEnqClosing" name="purpose-of-visit" value="Enq Closing" required>
+                Enq Closing
+            </label>
+            <label>
+                <input type="radio" id="SalelossVisit" name="purpose-of-visit" value="Sale loss Visit" required>
+                Sale loss visit
+            </label>
+
+            <label>
+                <input type="radio" id="visitPapersOrDues" name="purpose-of-visit" value="Papers or Dues" required>
+                Papers or Dues
+            </label>
+            <label>
+                <input type="radio" id="visitOTValuation" name="purpose-of-visit" value="OT Valuation" required>
+                OT Valuation
+            </label>
+            <label>
+                <input type="radio" id="visitFinance" name="purpose-of-visit" value="Finance Visit" required>
+                Finance Visit
+            </label>
+            <label>
+                <input type="radio" id="visitActivity" name="purpose-of-visit" value="Activity" required>
+                Activity
+            </label>
+            <label>
+                <input type="radio" id="visitMediator" name="purpose-of-visit" value="Mediator/Broker Visit" required>
+                Mediator/Broker Visit
+            </label>
+            <label>
+                <input type="radio" id="visitGoodwill" name="purpose-of-visit" value="Goodwill visit" required>
+                Goodwill visit
+            </label>
+            <label>
+                <input type="radio" id="visitOthers" name="purpose-of-visit" value="Others" required>
+                Others
+            </label>
+        </div>
+            
+        <label for="customerName"><b>Customer Name:</b></label>
+        <div class="input-box">
+            <input type="text" id="customerName" name="customerName" required>
+        </div>
+        <br>
+     <label for="contactInfo"><b>Phone Number:</b></label>
+<div class="input-box">
+    <input type="number" id="contactInfo" name="contactInfo" maxlength="10" required>
+</div>
+<br>
+        
+<label for="search-item"><b>Tractor Model discussed:</b></label>
+    <div class="input-box">
+        <input type="text" id="search-item" name="search-item" placeholder="Type to search..." oninput="filterItems()" required>
+        <ul id="item-list" style="display: none;"></ul>
+        <p id="item-error-message"></p>
+    </div>
+<br>
+
+<label><b style="background-color:Tomato;">ఈ ఎంక్వయిరీ ని LMS లో ఎంటర్ చేయాలని మీరు అనుకుంటున్నారా?</b></label>
+<div class="radio-group">
+    <label>
+        <input type="radio" id="Yes" name="inquiry" value="Yes" required>
+        అవును, కొంటారు
+    </label>
+    <label>
+        <input type="radio" id="No" name="inquiry" value="No" required>
+        అవసరం లేదు, కొనరు
+    </label>
+</div>
+
+        <label for="district"><b>Select District:</b></label>
+        <select id="district" name="district" onchange="updateMandals()" required>
+        
+            <option value="">Click to select</option>
+           <option value="Adilabad">Adilabad</option>
+<option value="Bhadradri kothagudem">Bhadradri kothagudem</option>
+<option value="Hanumakonda">Hanumakonda</option>
+<option value="Hyderabad">Hyderabad</option>
+<option value="Jagitial">Jagitial</option>
+<option value="Jangoan">Jangoan</option>
+<option value="Jayashankar bhupalapally">Jayashankar bhupalapally</option>
+<option value="Jogulamba gadwal">Jogulamba gadwal</option>
+<option value="Kamareddy">Kamareddy</option>
+<option value="Karimnagar">Karimnagar</option>
+<option value="Khammam">Khammam</option>
+<option value="Kumuram bheem asifabad">Kumuram bheem asifabad</option>
+<option value="Mahabubabad">Mahabubabad</option>
+<option value="Mahabubnagar">Mahabubnagar</option>
+<option value="Mancherial">Mancherial</option>
+<option value="Medak">Medak</option>
+<option value="Medchal malkajgiri">Medchal malkajgiri</option>
+<option value="Mulugu">Mulugu</option>
+<option value="Nagarkurnool">Nagarkurnool</option>
+<option value="Nalgonda">Nalgonda</option>
+<option value="Narayanpet">Narayanpet</option>
+<option value="Nirmal">Nirmal</option>
+<option value="Nizamabad">Nizamabad</option>
+<option value="Peddapalli">Peddapalli</option>
+<option value="Rajanna sircilla">Rajanna sircilla</option>
+<option value="Ranga reddy">Ranga reddy</option>
+<option value="Sangareddy">Sangareddy</option>
+<option value="Siddipet">Siddipet</option>
+<option value="Suryapet">Suryapet</option>
+<option value="Vikarabad">Vikarabad</option>
+<option value="Wanaparthy">Wanaparthy</option>
+<option value="Warangal">Warangal</option>
+<option value="Yadadri bhuvanagiri">Yadadri bhuvanagiri</option>
+
+            <!-- Add more districts as needed -->
+        </select>
+
+        <div class="question-box">
+            <label for="subcategory"><b>Select Mandal:</b></label>
+            <select id="subcategory" name="subcategory" onchange="updateVillages()" required>
+                <option value="">Click to Select</option>
+                <!-- Mandal options will be populated here -->
+            </select>
+        </div>
+
+        <div class="question-box">
+            <label for="village"><b>Select Village (LMS):</b></label>
+            <select id="village" name="village" required>
+                <option value="">Click to Select</option>
+                <!-- Village options will be populated here -->
+            </select>
+        </div>
+
+        <label for="location"><b>Village Name(optional):</b></label>
+        <div class="input-box">
+            <input type="text" id="location" name="location">
+        </div>
+        <br>        
+        <br>
+        <label for="latitude">Latitude:</label>
+        <input type="text" id="latitude" name="latitude" readonly>
+
+        <label for="longitude">Longitude:</label>
+        <input type="text" id="longitude" name="longitude" readonly>
+
+        <input type="submit" id="submit-button" value="Submit">
+        <br>
+    </form>
+
+    <img src="https://duet-cdn.vox-cdn.com/thumbor/0x0:1080x1080/1200x1200/filters:focal(540x540:541x541):no_upscale():format(webp)/cdn.vox-cdn.com/uploads/chorus_asset/file/22728661/image.gif" width="250" height="400" style="display: block; margin: 20px auto;">
+
+    <script>
+          
+        const mandals = {
+            "Hyderabad": ["Adilabad", "Bazarhathnoor", "Bela", "Bheempur", "Boath", "Gudihathnoor", "Ichoda", "Inderavelly", "Jainad", "Mavala", "Narnoor", "Neradigonda", "Talamadugu", "Tamsi", "Utnoor"],
+            
+           "Adilabad": ["Adilabad urban","Aidilabad rural","Bazarhatnoor","Bela","Bheempur","Boath","Gadiguda","Gudihatnoor","Ichoda","Inderavelly","Jainath","Mavala","Narnoor","Neradigonda","Sirikonda","Talamadugu","Tamsi","Utnoor"],
+
+"Adilabad": ["Adilabad urban","Aidilabad rural","Bazarhatnoor","Bela","Bheempur","Boath","Gadiguda","Gudihatnoor","Ichoda","Inderavelly","Jainath","Mavala","Narnoor","Neradigonda","Sirikonda","Talamadugu","Tamsi","Utnoor"],
+"Hyderabad": ["Musheerabad"],
+"Karimnagar": ["Chigurumamidi","Choppadandi","Ellandakunta","Gangadhara","Ganneruvaram","Huzurabad","Jammikunta","Karimnagar","Kothapally","Manakondur","Ramadugu","Shankarapatnam","Thimmapur lmd","V.saidapur","Veenavanka"],
+"Khammam": ["Bonakal","Chinthakani","Enkoor","Kalluru","Kamepalli","Khammam (rural)","Khammam urban","Konijerla","Kusumanchi","Madhira","Mudigonda","Nelakondapalli","Penuballi","Raghunadhapalem","Sathupalli","Singareni","Thallada","Tirumalayapalem","Vemsoor","Wyra","Yerrupalem"],
+"Mahabubnagar": ["Addakal","Balanagar","Bhoothpur","Chinnachintakunta","Devarakadra","Gandeed","Hanwada","Jadcherla","Koilkonda","Mahabubnagar rural","Mahabubnagar urban","Midjil","Moosapet","Nawabpet","Rajapur"],
+"Medak": ["Alladurg","Chegunta","Chilpched","Havelighanapur","Kowdipally","Kulcharam","Manoharabad","Medak","Narsapur","Narsingi","Nizampet","Papannapet","Ramayampet","Regode","Shankarampet (a)","Shankarampet (r)","Shivampet","Tekmal","Toopran","Yeldurthy"],
+"Nalgonda": ["Adavidevulapalli","Anumula","Chandampeta","Chandur","Chinthapally","Chityal","Dameracherla","Devarakonda","Gundlapally","Gurrampode","Kanagal","Kattangur","Kethepally","Kondamallepally","Madugulapally","Marriguda","Miryalaguda","Munugode","Nakrekal","Nalgonda","Nampally","Narketpally","Neredugommu","Nidmanoor","Pedda adesherlapally","Peddavoora","Shaligouraram","Thipparthy","Tirumalagiri sagar","Tripuraram","Vemulapally"],
+"Nizamabad": ["Armoor","Balkonda","Bheemgal","Bodhan","Chandur","Dharpally","Dichpally","Indalwai","Jakranpally","Kammarpally","Kotagiri","Makloor","Mendora","Morthad","Mosara","Mugpal","Mupkal","Nandipet","Navipet","Nizamabad rural","Nizamabad south","Renjal","Rudrur","Sirikonda","Vailpoor","Varni","Yedapally","Yergatla"],
+"Ranga reddy": ["Abdullapurmet","Amangal","Balapur","Chevella","Farooqnagar","Gandipet","Hayathnagar","Ibrahimpatnam","Jilled chowdergudem","Kadthal","Kandukur","Keshampet","Kondurg","Kothur","Madgul","Maheshwaram","Manchal","Moinabad","Nandigama","Rajendranagar","Saroornagar","Shabad","Shamshabad","Shankarpalle","Thalakondapally","Yacharam"],
+"Mahabubabad": ["Bayyaram","Chinnagudur","Danthalapalle","Dornakal","Gangaram","Garla","Gudur","Kesamudram","Kothaguda","Kuravi","Mahabubabad","Maripeda","Narsimhulapet","Nellikudur","Peddavangara","Thorrur"],
+"Wanaparthy": ["Amarchintha","Atmakur","Chinnambavi","Ghanpur","Gopalpeta","Kothakota","Madanapur","Pangal","Pebbair","Peddamandadi","Revally","Srirangapur","Wanaparthy","Weepangandla"],
+"Peddapalli": ["Anthergaon","Dharmaram","Eligaid","Julapalli","Kamanpur","Manthani","Mutharam (manthani)","Odela","Palakurthy","Peddapalli","Ramagiri","Ramagundam","Srirampur","Sulthanabad"],
+"Bhadradri kothagudem": ["Allapalli","Annapureddypalli","Aswapuram","Aswaraopeta","Burgampahad","Chandrugonda","Cherla","Chunchupalli","Dammapeta","Dummugudem","Gundala","Gundala_y","Julurpadu","Karakagudem","Laxmidevipalli","Manuguru","Mulkalapally","Palvoncha","Pinapaka","Sujathanagar","Tekulapalli","Yellandu"],
+"Jayashankar bhupalapally": ["Bhupalpally","Chityal","Ghanpur (mulug)","Kataram","Mahadevpur","Malharrao","Mogullapally","Mutharam mahadevpur","Palimela","Regonda","Tekumatla"],
+"Nagarkurnool": ["Achampet","Amrabad","Balmoor","Bijinapally","Charakonda","Kalwakurthy","Kodair","Kollapur","Lingal","Nagarkurnool","Padara","Peddakothapally","Pentlavelli","Tadoor","Telkapally","Thimmajipet","Uppununthala","Urkonda","Vangoor","Veldanda"],
+"Yadadri bhuvanagiri": ["Adda guduru","Alair","Atmakur (m)","B pochampally","Bhongir","Bibinagar","Bommalaramaram","Choutuppal","Gundala","Motakonduru","Mothkur","Narayanpur","Rajapeta","Ramannapet","Thurkapally","Valigonda","Yadagirigutta"],
+"Rajanna sircilla": ["Boinpalli","Chandurthi","Gambhiraopet","Illanthakunta","Konaraopet","Mustabad","Rudrangi","Sircilla","Thangallapalli","Veernapalli","Vemulawada","Vemulawada rural","Yellareddipet"],
+"Jagitial": ["Beerpur","Buggaram","Dharmapuri","Gollapalli","Ibrahimpatnam","Jagitial","Jagitial rural","Kathlapur","Kodimial","Korutla","Mallapur","Mallial","Medipalli","Metpalli","Pegadapalli","Raikal","Sarangapur","Velgatur"],
+"Sangareddy": ["Ameenpur","Andole","Gummadidala","Hathnoora","Jharasangam","Jinnaram","Kalher","Kandi","Kangti","Kohir","Kondapur","Manoor","Mogudampally","Munipally","Nagalgidda","Narayankhed","Nyalkal","Patancheru","Pulkal","Raikode","Ramchandrapuram","Sadasivpet","Sangareddy","Sirgapoor","Vatpally","Zahirabad"],
+"Siddipet": ["Akkannapet","Bejjanki","Cherial","Chinnakodur","Doultabad","Dubbak","Gajwel","Husnabad","Jagdevpur","Koheda","Komuravelli","Kondapak","Maddur","Markook","Mirdoddi","Mulug","Nangnoor","Narayanaraopet","Raipole","Siddipet rural","Siddipet urban","Thoguta","Wargal"],
+"Jangoan": ["Bachannapet","Chilpur","Devaruppula","Ghanpur (station)","Jangoan","Kodakandla","Lingalaghanpur","Narmetta","Palakurthy","Ragunathpally","Tharigoppula","Zaffergadh"],
+"Mancherial": ["Bellampally","Bheemaram","Bheemini","Chennur","Dandepally","Hajipur","Jaipur","Jannaram","Kannepally","Kasipet","Kotapally","Luxettipet","Mancherial","Mandamarri","Nennel","Tandur","Vemanpally"],
+"Jogulamba gadwal": ["Alampur","Dharoor","Gadwal","Ghattu","Ieeja","Itikyala","Kaloor thimmandoddi","Maldakal","Manopad","Rajoli","Undavelly","Waddepally"],
+"Kumuram bheem asifabad": ["Asifabad","Bejjur","Chintalamanepally","Dahegoan","Jainoor","Kagaznagar","Kerameri","Koutala","Lingapur","Penchicalpet","Rebbena","Sirpur (t)","Sirpur u","Tiryani","Wankidi"],
+"Nirmal": ["Basar","Bhainsa","Dasturabad","Dilawarpur","Kaddam peddur","Khanapur","Kubeer","Kuntala","Laxmanchanda","Lokeswaram","Mamada","Mudhole","Narsapur g","Nirmal rural","Pembi","Sarangapur","Soan","Tanoor"],
+"Vikarabad": ["Bantwaram","Basheerabad","Bomaraspeta","Dharur","Doma","Doulathabad","Kodangal","Kotepally","Kulkacharla","Marpalle","Mominpet","Nawabpet","Pargi","Peddemul","Pudur","Tandur","Vikarabad","Yelal"],
+"Suryapet": ["Ananthagiri","Atmakur (s)","Chilkur","Chinthalapalem","Chivemla","Garidepally","Huzurnagar","Jajireddygudem","Kodad","Maddirala","Mattampally","Mellachervu","Mothey","Munagala","Nadigudem","Nagaram","Nereducherla","Nuthanakal","Palakeedu","Penpahad","Suryapet","Thirumalagiri","Thungaturthy"],
+"Kamareddy": ["Banswada","Bhiknoor","Bibipet","Bichkunda","Birkur","Domakonda","Gandhari","Jukkal","Kamareddy","Lingampet","Machareddy","Madnoor","Nagireddypet","Nasurullabad","Nizamsagar","Pedda kodapgal","Pitlam","Rajampet","Ramareddy","Sadashivanagar","Tadwai","Yellareddy"],
+"Warangal": ["Chennaraopet","Duggondi","Geesugonda","Khanapur","Khila warangal","Nallabelli","Narsampet","Nekkonda","Parvathagiri","Rayaparthy","Sangem","Wardhannapet"],
+"Hanumakonda": ["Athmakur","Bheemadevarpalli","Damera","Dharmasagar","Elkathurthy","Hanamkonda","Hasanparthy","Inavole","Kamalapur","Khazipet","Nadikuda","Parkal","Shayampet","Velair"],
+"Medchal malkajgiri": ["Bachupally","Gandimaisamma dundigal","Ghatkesar","Keesara","Medchal","Medipally","Muduchinthalapally","Shamirpet"],
+"Mulugu": ["Eturunagaram","Govindaraopet","Kannaigudem","Mangapet","Mulug","Tadvai","Venkatapur","Venkatapuram","Wajedu"],
+"Narayanpet": ["Damargidda","Dhanwada","Kosgi","Krishna","Maddur","Maganoor","Makthal","Marikal","Narayanpet","Narwa","Utkoor"]
+            // Add more districts and their mandals as needed
+        };
+
+        const villages = {
+           "Adilabad urban": ["Adilabad","Dasnapur (ct)"],
+"Aidilabad rural": ["Ankapur","Ankoli","Anukunta","Arli (buzurg)","Ashodaburki","Belluri","Bheemseri","Burnoor","Chanda -t","Chichdhari","Chinchughat","Dimma","Ganeshpur","Hattigutta","Jamdapur","Jamuldhari","Kachkanti","Khanapur","Khandala","Kottur","Kumbhajheri","Landasangvi","Lohara","Lokari","Maleborgaon","Mallapur","Maregaon","Nishaghat","Pippaldhari","Pochera","Ramai","Rampoor (royati)","Takli","Tantoli","Taroda (srimath)","Tippa","Wanwat","Yapalguda"],
+"Bazarhatnoor": ["Ananthapur","Balanpur","Bandrev","Bazarhathnoor","Bhosra","Bhutai (buzurg)","Bhutai (khurd)","Chintal sangvi","Dehgaon","Dhabadi","Dharampuri","Dignoor","Gangapur","Girjai","Girnur","Gokonda","Harkai","Jatarla","Kandli","Kankadurga","Kinnerpalle","Kolhari","Mankapur (p)","Mohada","Morekhandi","N-f","Pipri","Rampur","Tembi","Umerda (buzurg)","Warthamanoor","Yesapur"],
+"Bela": ["Awalpur","Bela","Bhadi","Bhedoda","Bhodod (kopsi)","Boregaon","Burhanpur","Chandpalle","Chaprala","Datalpur","Dehegaon","Dhoptala","Douna","Ekori","Guda","Junoni","Kamgarpur","Karoni (b)","Karoni (k)","Khadki","Khagdur","Kobhai","Koparuzana","Mangrool","Manyarpur","Masala (buzurg)","Masala (khurd)","Mohabatpur","Nagrala","Narayanpur","Patan","Pitgaon","Pohar","Ponnala","Ramkam","Sadarpur","Sahej","Sangdi","Sangvi","Shamshabad","Singapur","Sirsanna","Sonkhos","Syedpur","Takli","Toyaguda (kora)","Warur"],
+"Bheempur": ["Anderband","Antergaon","Arli (t)","Belsari rampur","Bheempur","Dabbakuchi","Dhanora","Gollaghat","Gomutri","Gona","Guledi","Gunjala","Kamathwada","Karanji (t)","Nippani","Pippalkoti","Tamsi (k)","Wadgaon","Wadoor"],
+"Boath": ["Anduru","Babera","Bahrapur","Birlagondi","Boath (buzurg)","Boath (khurd)","Chintalabori","Demmi","Dera","Dhannur (buzurg)","Dhannur (khurd)","Ghanpur","Gollapur","Kangutta","Kantegaon","Karathwada","Keslapur","Kistapur","Kowtha (buzurg)","Kowtha (khurd)","Kuchalapur","Marlapalle","Medi","Nagapur","Nakkalawada","Narayanpur","Nigini","Pardi (buzurg)","Pardi (khurd)","Patnapur","Pippaladhari","Pochera","Sakhera","Sangvi","Sonala","Suradapur","Tewiti","Venkatapur","Wajar"],
+"Gadiguda": ["Ademeyon","Arjuni","Dhaba (buzurg)","Dhaba (k)","Dongargaon","Gadiguda","Gouri","Jhari","Kadodi","Khadki","Khandow","Kolama","Kondi","Kothapalle (g)","Kouthala","Kunikasa","Lokari (b)","Lokari (k)","Maregaon","N-f","Paraswada (k)","Parswada (b)","Pipri","Pownur","Punaguda","Rampur","Rupapur","Sangvi","Sawari","Sedwai","Warkwai"],
+"Gudihatnoor": ["Belluri","Dhampur","Dongargaon","Gondharkapur","Gudihathinur","Guruj","Kamalapur","Kolhari","Lingapur","Machapur","Malkapur","Mannur","Muthnur","Neradigonda","Rendlabori","Seetagondi","Shantapur","Tejapur","Tosham","Umri(b)","Vaijapur","Waghapur"],
+"Ichoda": ["Adegaon (buzurg)","Adegaon (khurd)","Babjepet","Babuldow","Borigoan","Chincholi","Dhaba (buzurg)","Dhaba khurd","Dharmapuri","Gaidpally","Girjam","Gubba","Gundala","Gundi","Gundiwagu","Heerapur","Ichoda (ct)","Jalda","Jamidi","Jogipet","Junni","Kamgiri","Keshavpatnam","Kokasmannur","Lingapur","Madhapur","Malyal","Mankapur","Mukhra (buzurg)","Mukhra (khurd)","Narsapur","Navegaon","N-f","Salyada","Sirichelma","Talamadri"],
+"Inderavelly": ["Anji","Bursanpatar","Dasnapur","Devapur","Dhannura (b)","Dhannura (k)","Dodanda","Dongargaon","Gattepalle","Ginnera","Goureepur","Harkapur","Heerapur","Indervelly (b)","Indervelly (k)","Keslaguda","Keslapur","Mamidiguda","Mendapalle","Muthnur","Pipri","Tejapur","Wadagaon","Wadgalpur (buzurg)","Walganda heerapur","Yamaikunta"],
+"Jainath": ["Ada","Akoli","Akurla","Awalpur","Bahadurpur","Balapur","Ballori","Belgaon","Bhoraj","Dadapoor","Deepaiguda","Dollara","Fouzpur","Gimma (khurd)","Gimma buzurg","Guda","Hariyali","Hashampur","Hathighat","Jainad","Jamini","Kamai","Kamtha","Kanpa (mediguda)","Karanji","Karanwadi","Kedarpur","Khapri","Kodekotha","Korta","Kowtha","Kura","Kuthompur","Laxmipur (uligan)","Lekarwadi","Makoda","Mangurla","Mirzapur","Moudagada","Muktapur","Nirala","Nizampur","Pardi (buzurg)","Pardi (khurd)","Pendalwada","Pippalgaon","Pipparwada","Poosai","Rampurtaraf","Sangvi (k)","Savapur","Sekapoor","Sirsonna","Tarada (buzurg)","Umri"],
+"Mavala": ["Battisavargaon","Mavala"],
+"Narnoor": ["Babjhari","Balanpur","Bheempur","Chorgaon","Dhupapur","Empalle","Gangapur","Gundala","Gunjala","Khairdatwa","Khampur","Kothapalli - h","Mahadapur","Mahagaon","Malangi","Malepur","Manjari","Mankapur","Nagolkonda","Narnoor","Sonapur","Sungapur","Tadihadapnur","Umri"],
+"Neradigonda": ["Arepalle","Bandemregad","Bondadi","Boragaon","Buddikonda","Buggaram","Chincholi","Darba","Dhonnora","Gajli","Gandhari","Ispur","Jasnapur","Kishtapur","Koratkal (buzurg)","Koratkal (khurd)","Kumari","Kuntala (buzurg)","Kuntala (khurd)","Kupti (buzurg)","Kupti (khurd)","Lingatla","Lokhampur","Madhapur","Malkalpahad","Nagamalyal","Narayanapur","Neradigonda","N-f_1","N-f_2","Peechra","Purushothampur","Raipur","Rajura","Rolmanda","Shankarapur","Sowergaon","Surdapur","Tarnam (buzurg)","Tarnam (khurd)","Tejapur","Venkatapur","Waddur","Wagdhari","Wankidi"],
+"Sirikonda": ["Dharmasagar","Kondapur","Lachimpur (b)","Lachimpur (k)","Lakampur","Mallapur","Narayanapur","Neradigonda","Neradigonda (k)","N-f","Pochampalle","Ponna","Rampur (b)","Sirikonda","Soanpalle","Sunkidi","Waipet"],
+"Talamadugu": ["Arli (khurd)","Bharampur","Dehegaon","Devapur","Dorli","Jhari","Kajjarla","Kappardevi","Khodad","Kosai","Kothur","Kuchalapoor","Lachampur","Lingi","Madnapoor","Nandigaon","Palasi (buzurg)","Palasi (khurd)","Palle (buzurg)","Palle (khurd)","Pangadpipri","Ratnapur","Ruyyadi","Saknapoor","Sunkidi","Talamadugu","Umadam","Umrei"],
+"Tamsi": ["Ambugaon","Bandalnagapur","Ghotkuri","Girgaon","Hasnapur","Jamidi","Kapparla","Palodi (ramnagar)","Ponnari","Sawargaon","Tamsi (b)","Waddadi"],
+"Utnoor": ["Andholi","Balampur","Bhupet","Birsaipet","Chandur","Chintakarra","Danthanpalle","Durgapur","Gangamapet","Gangapur","Ghanpur","Ghatti","Hasnapur","Heerapur - j","Heerapur d","Kamaipet","Kopergadh","Lakkaram","Luxettipet","Nagapur","Narsapur (buzurg)","Narsapur (khurd)","Narsapur (new)","N-f_1","N-f_2","N-f_3","N-f_4","Pulimadgu","Ramlingampet","Rampur (khurd)","Sakhera","Salewada (buzurg)","Salewada (khurd)","Shampur","Tandra","Tejapur - j","Umri","Utnoor","Wadgalpur (khurd)","Wadoni","Yenda","Yenka"],
+"Musheerabad": ["Ghmc (m corp. + og) (part)_1","Ghmc (m corp. + og) (part)_10","Ghmc (m corp. + og) (part)_11","Ghmc (m corp. + og) (part)_12","Ghmc (m corp. + og) (part)_13","Ghmc (m corp. + og) (part)_14","Ghmc (m corp. + og) (part)_15","Ghmc (m corp. + og) (part)_2","Ghmc (m corp. + og) (part)_3","Ghmc (m corp. + og) (part)_4","Ghmc (m corp. + og) (part)_5","Ghmc (m corp. + og) (part)_6","Ghmc (m corp. + og) (part)_7","Ghmc (m corp. + og) (part)_8","Ghmc (m corp. + og) (part)_9","Gowaldoddi","Maktha bibi sahebguda (og)","Osmania university (ct)"],
+"Chigurumamidi": ["Bommanapalle","Chigurumamidi","Indurthi","Kondapur","Mudimanikyam","Mulkanoor","Nawabpeta","Ramancha","Rekonda","Sundaragiri","Ullampalle"],
+"Choppadandi": ["Arnakonda","Bhupalapatnam","Chakunta","Chityalpalle","Choppadandi","Gumlapur","Katnepalle","Kolimikunta","Konerupalle","Ragampeta","Rukmapur","Vedurughattu"],
+"Ellandakunta": ["Bujunoor","Chinnakomatpalli","Ellanthakunta","Kanagarthi","Mallial","Patharlapalli","Rachapalli","Sirsed","Tekurthy","Vanthadupula"],
+"Gangadhara": ["Achampalli","Burgupalle","Gangadhara","Garsekurthi","Gattuboothkur","Islampur","Kachireddipalle","Kondaipalle","Kurikial","Mallapur","Nagireddipur","Narasimhulapalle","Narayanpur","Nyalakonda palle","Ryalapalle","Sarvareddipalle","Thirmalapur","Uppara mallial","Venkataipalle"],
+"Ganneruvaram": ["Cherlapur","Ganneruvaram","Gopalpur","Gunkulkondapur","Jangapalli","Kashimpet","Madhapur","Mailaram","Panthulu kondapur","Paruvella","Sangem","Yaswada"],
+"Huzurabad": ["Bornapalle","Chelpur","Dharmaraju palle","Huzurabad","Jupak","Kandugula","Kanukulagidda","Katrepalle","Pothireddipet","Singapur","Sirsapalle","Thummanapalle"],
+"Jammikunta": ["Bijigirsharief","Dharmaram (p.b) (ct)","Jammikunta","Korapalli","Madipalli","Saidabad","Thangula","Vavilala","Vilasagar"],
+"Karimnagar": ["Arepalle (part)","Arepalli","Bommakal (og)","Chamanpalli","Chegurthi","Cherlabuthkur","Durshed","Elbotharam","Fakeerpet","Hasnapur","Irukulla","Jublinagar","Karimnagar","Maqdumpur","Nagunur","Pothgal","Taharakondapur","Vallampahad"],
+"Kothapally": ["Asifnagar","Baddipalle","Chintakunta (og) (part)","Chintakunta (part)","Elgandal","Kamanpur","Khazipur","Kothapalle(haveli)","Lakshmipur","Malkapur","Nagulamalial","Oddyaram","Rekurthi (ct)","Sitarampur (og)"],
+"Manakondur": ["Annaram","Chenjerla","Devampalle","Edulagattepalle","Gangipalle","Gattududdenapalle","Kelledu","Kondapalkala","Lalithapur","Lingapur","Maddikunta","Manakondur","Munjampalle","Pachunur","Utoor","Vannaram","Vegurupalle","Veldi"],
+"Ramadugu": ["Chippakurthi","Dathojipet","Deshrajpalle","Fakeerpet","Gopalraopet","Gundi","Kistapur","Kokkerakunta","Koratpalle","Laxmipur","Mothe","Ramadugu","Rudraram","Shanagar","Sriramulapalle","Vannaram","Vedira","Velichal"],
+"Shankarapatnam": ["Ambalpur","Amudalapalle","Arkandla","Dharmaram","Gaddapaka","Kachapur","Kalavala","Kannapur","Kareempet","Keshavapatnam","Kothaghat","Metpalle","Molangur","Mutharam","Rajapur","Thadikal","Yeradpalle"],
+"Thimmapur lmd": ["Alugunur (og)","Kothapalle (p.n)","Mallapur","Mannempalle","Mogilipalem","Nallagonda","Nedunur","Nustulapur","Parlapalle","Polampalle","Porandla","Renikunta","Thimmapur","Vachunur"],
+"V.saidapur": ["Akunur","Ammanagurthi","Bommakal","Duddenapalle","Eklaspur","Elabotharam","Ghanpur","Godisala","Raikal","Ramchandrapur","Saidapur","Somaram","Venkepalle","Vennampalle"],
+"Veenavanka": ["Bethigal","Bonthupalle","Brahmanpalle","Challoor","Elbaka","Ghanmukla","Kanparthi","Kondapaka","Korkal(jangampalle)","Mamidalapalle","Pothireddipalle","Reddipalle","Valbapur","Veenavanka"],
+"Bonakal": ["Allapadu","Bonakal","Brahmanapalli (k)","Chinna beeravalli","Chirunomula","Choppa katlapalem","Garlapadu","Govindapuram","Kalakota","Laxmipuram","Motamarri","Mustikuntla","Narayanapuram","Peddabeeravalli","Ramapuram","Rapalli","Ravinuthala","Thutikuntla"],
+"Chinthakani": ["Ananthasagar","Bashwapuram","Chinnamandava","Chinthakani","Kodumuru","Lachagudem","Mathikepally","Nagili gonda","Nagula vancha","Nerada","Pandillapally","Patharlapadu","Proddutur","Repallevada","Thimminenipalem","Vandanam"],
+"Enkoor": ["Arekayalapadu","Burda raghavapuram","Enkoor","Jannaram","Kesupally","Medepally","Nacharam","Nukalampadu","Raimadharam","Timmaraopeta","Tutukalingannapeta"],
+"Kalluru": ["Bathulapalli","Chandrupatla","Chennuru","Chinna korukondi","Erraboinapalli","Gokaram","Gopaladeviboinapally","Kalluru","Khankhanpeta","Korlagudem","Laxmipuram","Lokaram","Mucharam","Narayanapuram","N-f","Payapur","Peddakorukondi","Peruvancha","Raghunadhagudem","Ravikampadu","Talluru","Telagaram","Vennavalli","Yagna narayanapuram"],
+"Kamepalli": ["Garidepally","Govindrala","Jasthipally","Kamepally","Kommenapally","Kondaigudem","Lingala","Maddulapally","Mucharla","Nemalipury","Pinjaramadugu","Ponnekal","Utkoor"],
+"Khammam (rural)": ["Arekodu","Arempula","Barugudem","Danavaigudem","Edulapuram (og) (part)","Gollapadu","Gudimalla","Gudurupadu","Gurralapadu","Kachirajugudem","Kondapuram","M.venkatayapalem","Maddulapally","Mallemadugu","Mutthagudem","Pallegudem","Polepally","Tallampadu","Thanagampadu","Theerdhala","Theldarupalli","Yedulapuram"],
+"Khammam urban": ["Khammam"],
+"Konijerla": ["Ammapalem","Duddepudi","Goparam","Gopathi","Gubbagurthi","Gundrathimadugu","Kacharam h","Konda vanamala","Konijerla","Linga gudem","Mallupally","N-f","Pallipadu","Pedamunagala","Singaraipalem","Sivaru venkatapuram","Thanikella","Thummalapally","Yatham kuntla"],
+"Kusumanchi": ["Bhagatveedu","Chegomma","Chowtapally","Eswaramadharam","Gaigollapalli","Gattu singaram","Jakkepalli","Jeellacheruvu","Jujjularaopeta","Kusumanchi","Mallepally","Munigepalli","Nayakangudem","Nelapatla","Paleru","Perikasingaram","Pocharam","Rajupeta"],
+"Madhira": ["Ambarupeta","Atukuru","Chilukuru","Dendukuru","Didugupadu","Illendulapadu","Illuru","Jalimudi","Khammampadu","Kistapuram @ munagala","Madhira (ct)","Madupalle","Mallavaram","Matoor","Nagavarappadu","Nakkalagaruvu","Nidanapuram","Rayapatnam","Rompinalla","Siddinenigudem","Siripuram (pm)","Terlapadu","Tondala gopavaram","Vangaveedu","Yendapalle"],
+"Mudigonda": ["Ammapeta","Banapuram","Chirumarri","Gandhasiri","Gangapuram d","Gokinapally","Kamalapuram","Kanapuram","Katkoor","Madhapuram","Mallaram","Medepally","Mudigonda","Muttharam","Narasapuram d","Pammi","Pandregipally","Peddamandava","Suvarnapuram","Vallabhi","Vallapuram","Venkatapuram","Yedavalli"],
+"Nelakondapalli": ["Acharlagudem","Anasagar","Aregudem","Biravunapally","Bodulabanda","Buddaram","Chandapuram","Chennaram","Cheruvu madharam","Guvvalagudem","Kattu kacharam","Konaigudem","Kongara","Mandrajupally","Mujjugudem","Nachepally","Nelakondapally","Painampally","Rajeswarapuram","Ramachandrapuram","Singireddypalem","Surdeypally","Thirumalapuram"],
+"Penuballi": ["Adavimallayala","Bayyannagudem","Bhavannapalem","Chinthagudem","Chowdaram","Chowdavaram","Ganeshpadu","Gollagudem","Gowararam","Karaigudem","Kondrupadu","Kuppenakuntla","Lankapalli","Lingagudem","Mandalapadu","Penuballi","Ramachandra puram","Tallapenta","Tekulapalli","Telgaram","Tummalapalli","Yerugatla"],
+"Raghunadhapalem": ["Ballepalle (ct)","Chimmapudi","Daredu","Dhamsalapuram","Earlapudi","Kamanchikal","Khanapuram haveli (ct)","Koya chalka","Mallepalli chinthagurthy","Manchukonda","Papapatapally","Ragunadha palem","Regulachalaka","V. venkatayapalem","Velugumatla","Vepakuntla"],
+"Sathupalli": ["Bethupalle","Cherukupalle","Dacharam","Jaganadhapuram","Kakarlapally","Kistaram","Kommepally","Regallapadu","Rejerla","Rudrakashapally","Sadhasivunipalem","Sathupally","Siddharam","Thumburu","Yathalakunta"],
+"Singareni": ["Bajumallaigudem","Gatekarepally","Kamalapuram","Komatlagudem","Madharam","Manikyaram","Perupally","Relakayalapally","Singareni","Usirikayalapally","Vishwanadhapally"],
+"Thallada": ["Annarugudem","Balapeta","Baswapuram","Billupadu","Gopalpeta","Kalakodima","Kodavatimetta","Kurnavalli","Laxmipuram","Mallaram","Mittapalli","Muddunuru","Nutankal","Pinapaka","Ramanujavaram","Rejerla","Tallada","Telagaram","Vengannapeta"],
+"Tirumalayapalem": ["Bachodu","Bandampally","Beerolu","Edulla cheruvu","Hasnabad","Hydersaipeta","Jallepally","Jupeda","Kakaravai","Kokkireni","Laxmidevipally","Mahamadapuram","Medidapally","Muzahidpuram","Patharlapadu","Pinampally","Pindiprolu","Raghunadhapalem","Rajaram","Solipuram","Sublaidu","Talla cheruvu","Tettelapadu","Thirumalayapalem","Tippareddygudem"],
+"Vemsoor": ["Adasarlapadu","Ammapalem","Bharanipadu","Duddepudi","Guduru","Kallurugudem","Kandukuru","Kondrugatlamallela","Kunchaparthy","N-f","Pallevada","Vemsoor","Vennachedu","Yerragunta"],
+"Wyra": ["Astanagurthi","Brahmanapalle (a.g)","Dachapuram","Gannavaram","Garikapadu","Gollapudi","Gollenapadu","Khanapuram","Konda kodima","Lingannapalem","Medibanda","Musalimadugu","Narapunenipalli","Paladugu","Poosalapadu","Punyapuram","Rebbavaram","Siripuram (k.g.)","Somavaram","Tatipudi","Vallapuram","Veppala madaka"],
+"Yerrupalem": ["Ayyavarigudem","Banigellapadu","Bheemavaram","Choppakatlapalem","Gatla gowraram","Gosaveedu","Guntupalligoparam","Inagali","Jamalapuram","Kacharam","Kesireddypalli","Mamnoor","Meenavolu","Mulugumadu","Pedda goparam","Pegallapadu","Rajulapalem","Rangagudem","Remidicherla","Sakhina veedu","Takkellapadu","Tatigudem","Tripuraram","Yerrupalem"],
+"Addakal": ["Addakal","Baleedupalle","Chinnamungalachedu","Gudibanda","Kandur","Kanmanoor","Katavaram","Muthyalampalle","Peddamungalachedu","Ponnakal","Rachala","Shakhapur","Thimmaipalle","Varne"],
+"Balanagar": ["Appajipalle","Balanagar","Bodajanampeta","Chinna revalli","Gouthapur","Gunded","Hemajipur","Kethireddipalle","Lingaram","Macharam","Modampalle","Mothighanapur","Nandaram","Nerellapalle","Peddarevelly","Peddayapalle","Seriguda","Suraram","Thirmalagiri","Udithyal","Vanamavaniguda"],
+"Bhoothpur": ["Amistapur","Annasagar","Bhoothpur","Gopalapur (khurd)","Hasnapur","Kappeta","Karvena","Kothamolgara","Kothur","Maddigatla","Pathamolgara","Pothulamadugu","Ravalpalle","Tadikonda","Tadparthy","Yelkicharla"],
+"Chinnachintakunta": ["Allipur","Ammapur","Appampalle","Bandrepalle","Chinnachintakunta (ct)","Damagnapur","Dasarpalle","Edulapur","Fareedpur","Gudur","Kurumurthy","Lakshmidevipur","Lalkota","Maddur","Mutchintala","Nellikondi","Pallamarri","Seetharampeta","Thirumalapur","Undyala","Waddemanu"],
+"Devarakadra": ["Ajilapur","Balsupalle","Baswaipalle","Baswapur","Bollaram","Chinnarajmoor","Chowdarpalle","Devarkadra","Dokur","Gaddeguda","Gopanpalle","Goplapurkalan","Gudibanda","Gurakonda","Hajilapur","Isrampalle","Jeenugurala","Koukuntla","Laxmipalle","Meenuguvanipalle","Nagaram","Peddarajmoor","Perur","Puttapalle","Rekulampalle","Venkataipalle"],
+"Gandeed": ["Annareddipalle","Baispalle","Balsulgonda","Chelmilla","Chinnavarval","Chowderpalle","Gadrial","Gandeed","Govindapalle","Jinnaram","Julapalle","Kaplapur","Komreddipalle","Kondapur","Lingaipalle","Mangampet","Mansoorpalle","Mohammadabad","Mukarlabad","Nancherla","Pagdiyal","Peddavarval","Reddipalle","Rusumpalle","Salarnagar","Salkerpet","Sangaipalle","Varahagiripalle","Vennached"],
+"Hanwada": ["Ammapur","Ayodhyanagar","Budharam","Cheekarlapalle","Chinnadharpalle","Dachekpalle","Dorasamudram","Fathepur","Guddimalkapur","Gundyala","Hanwada","Ibrahimbad","Kothapeta","Madharam","Munimokesham","Naginonipalle","Peddadharpalle","Shaikpalle","Tankara","Vepoor","Yarenpalle"],
+"Jadcherla": ["Aloor","Alwanpalle","Ambatapur","Ammapalle","Badepalle (ct)","Bureddipalle","Burgupalle","Chinna adiryal","Chintaboinpalle","Earlapalle","Gangapur","Gollapalle","Goplapur (kalan)","Jadcherla (ct)","Khanapur","Kishtaram","Kistaram","Kodgal","Koduparthy","Konded","Macharam","Malleboinpalle","Nagasala","Nasrullabad","Nekkonda","Pedda adiryal","Polepalle","Shankarayapalle","Soudagarpalle","Uddandapur","Vallur"],
+"Koilkonda": ["Abhangapatnam","Acharyapur","Akkaipalle","Ananthapur","Ankilla","Ayyawarpalle","Burgupalle","Chandapur","Chandraspalle","Chanmanpalle","Garlapad","Ibrahimnagar","Jamalpur","Kannaipalle","Kesavapur","Khazipur","Koilkonda","Kothlabad","Kushmohmedpalle","Lingalched","Lingupalle","Malkapur","Mallapur","Modipur","Mubarakpur","Nallavelly","Parpalle","Perkiweedu","Rampur","Salepalle","Serivenkatapur","Suraram","Thirumalampalle","Veerampalle","Vinjamur","Yellareddipalle"],
+"Mahabubnagar rural": ["Allipur","Appaipalle","Dharmapur","Gajulapeta","Ippalpalle","Kadur","Kotakadira","Machanpalle","Manikonda","Oblaipalle","Ramchandrapur","Venkatapur","Zamistapur"],
+"Mahabubnagar urban": ["Boyapalle (ct)","Jannappapalle","Mahabubnagar","Mahbubnagar (r) (og)","Palakonda (r)","Yedira (og) (part)","Yedira (part)","Yenugonda (ct)","Yerravalli","Zainallipur"],
+"Midjil": ["Bhairampalle","Boinpalle","Chedughattu","Chiluveru","Donur","Kanchanpalle","Kothapalle","Kothur","Masigundlapalle","Midjil","Munnanur","Singamdoddi","Vaspula","Velugommula","Vemula","Wadiyal"],
+"Moosapet": ["Chakrapur","Dasaripalle","Janampeta","Kankapur","Komireddipalle","Mohammed hussainpalle","Nandipet","Nizalapur","Polkampalle","Sankalamaddi","Thimmapur","Thunkinipur","Vemula"],
+"Nawabpet": ["Ammapur","Chakalpalle","Chowdoor","Darpalle","Depalle","Gurukunta","Hajilapur","Hanmasanipalle","Ippatur","Kakarjala","Kakarlapahad","Kamaram","Kanmankalva","Karkonda","Karoor","Kolloor","Kondapur","Kothapalle","Kuchoor","Lingampalle","Lokirev","Malkapur","Marikal","Mogulapalle","Parvathapur","Pomal","Pursampalle","Rekulachowdapur","Rudraram","Siddotam","Teegalapalle","Veersettipalle","Yemmanagandla"],
+"Rajapur": ["Agraharam potlapalle","Bibinagar","Chennavalli","Dondlapalle","Edganpalle","Gundlapotlapalle","Kallepalle","Khanapur","Kuchcherkal","Kuthnepalle","Mallepalle","Raghvapur","Raipalle","Rajapur","Rangareddiguda","Thirumalapur"],
+"Alladurg": ["Alladurg","Appajipally","Bhahirandibba","Chevella","Chilvera","Mahammadapur","Mupparam","Muslapur","Peddapur"],
+"Chegunta": ["Ananthasagar","Bonal","Chandaipet","Chegunta (ct)","Chetlathimmaipally","Chinna shivnoor","Gollapally","Ibrahimpur","Kasanpally","Kistapur","Kondapur [bonal]","Makkarajpet","Pedda shivnoor","Polampalle","Pothampally","Pothamshetpally","Pulamamidi","Ramapur","Reddipally","Rukmapur","Ulli thimmaipally","Wadiaram"],
+"Chilpched": ["Ajjamarri","Antharam","Banda pothugal","Chandur","Chilipched","Chitkul","Faizabad","Gangaram","Gouthapur","Jaggampet","Rahimguda","Ramdasguda","Seri faizabad","Somakkapet"],
+"Havelighanapur": ["Ananthasagar","Aurangabad","Bogada bhoopathipur","Burugupally","Byathole","Byathole thimmaipally","Fareedpur","Gangapur","Havelighanpur","Kuchanpally","Lingasanpally","Mirgudpally","Mudulwai","Muthaipalle","Nagapur","N-f","Rajpet","Sardhana","Serikuchanpalle","Shalipet","Shamnapur","Suklapet","Thogita"],
+"Kowdipally": ["Bujarampet","Dasguda","Devalpally","Dharmasagar","Kanchanpally","Kannavaram","Kowdipally","Kukatpally","Lingaraoguda","Mangalpally","Mohammednagar @ munirai","Mutrajpally","Nagasanpally","Rajilapur","Rajpet","Salabatpur","Thimmapur","Thunki","Venkatapur_1","Venkatapur_2","Yelmakanna"],
+"Kulcharam": ["Amsanpally","Appajipally","Chinnaghanpur","Etigadda mahmmadapur","Kistapur","Konapur","Kongode","Kulcharam","Nainjalalpur","N-f","Paithara","Pothamsettipally","Pothireddipally","Rampur","Rangampet","Sangaipet","Serivariguntham","Thukkapur","Tummalapally","Variguntham","Venkatapur","Yenigandla"],
+"Manoharabad": ["Chatla gouraram","Dharmarajpally","Jeedipalle","Kallakal","Konaipally (patti tupran)","Kondapur","Kucharam","Lingareddipet","Manoharabad","Masjid palle (nk)","Muppireddipally","Palat","Parkibanda","Potharam","Ramaipally","Rangaipally","Venkatapur agraharam"],
+"Medak": ["Ausulpalle (og)","Balanagar","Chityal","Khazipalle","Komtoor","Makta bhoopathipur","Maqdumpur","Medak","Medak (r)","Pashapur","Pathur","Perur","Rajpalle","Rayalamadugu","Rayanpalle","Venkatapur"],
+"Narsapur": ["Achampet","Admapur","Ahmednagar","Awancha","Brahmanpalle","Chinna chintakunta","Chippalturthi","Dharmaram","Gollapalle","Hanmanthapur","Ibrahimbad","Jakkupalle","Kagazmaddur","Khazipet","Kondapur","Lingapur","Madapur","Malparthi","Manthoor","Mohammadabad @ janakampet","Moosapet","Nagulpalle","Naimatullaguda","Narayanpur","Narsapur","Nathinoipalle","Pedda chintakunta","Ramachandrapur","Reddipalle","Rustumpet","Sitarampur","Thirmalapur","Tujalpur","Tuljarampet","Yellapur"],
+"Narsingi": ["Bheemraopalle","Kaslapur","Narsampalle","Narsingi","Sankhapur","Seripalle","Vallabhapur","Valloor","Zapthishivnur"],
+"Nizampet": ["Bachurajpalle","Chelmeda","Kalwakunta","Nandigaon","Narlapur","Naskal","Nizampet","Venkatapur"],
+"Papannapet": ["Ablapur","Annaram","Arkela","Bacharam","Cheekode","Chitriyal","Doulapur","Ellapoor","Enkepalle","Gandharpalle","Kodpak","Kompalle","Kothapalle","Kurthiwada","Lingaipalle","Mallampet","Minpur","Muddapur","Nagsanpalle","Namapur","Narsingi","Papannapet","Podchenpalle","Ramathirtham","Thimmaipalle","Yousufpet"],
+"Ramayampet": ["Akkannapet","Damaracheru","Dantepalle","Dongal dharmaram","Jamsing lingapur","Katrial","Komatipalle","Konapur","Lakshmapur","Parvathapur","Ramayampet","Rayalapur","Sadasivnagar","Sivaipalle","Sutarpalle","Thonigandla"],
+"Regode": ["Burhanwadi","Chowderpalle","Dosapalle","Gajwada","Jagriyal","Kondapur","Kothwalpalle","Lingampalle","Marpalle","Pocharam","Pyararam","R. itikyal","Regode","Sindole","Tatpalle","Timmapur","Venkatapur [maktha]"],
+"Shankarampet (a)": ["Baddaram","Burugupalle","Cheelapalle","Chintal lakshmapur","Danampalle","Gottimukkala","Jambikunta","Jukal","Kamalapur","Kollapalle","Koppole","Kothapet","Maktha lakshmapur","Malkapur","Marshetpalle","Musapet","Narayanapalle","N-f","Ramajipalle","Shankarampet (a) (ct)","Sivaipalle","Tenkati","Thirumalapur","Uthloor","Venkatapur (katela)","Virojipalle"],
+"Shankarampet (r)": ["Ambajipet","Chandampet","Chandapur","Dharpalle","Gajgatlapalle","Gavalpalle","Jangrai","Kamaram","Khajapur","Korivipalle","Madur","Mirzapalle","Shankaraj kondapur","Shankarampet (r)","Suraram","Turkala mohammedapur"],
+"Shivampet": ["Allipur","Bijilipur","Chandi","Chennapur","Chinnagottimukkala","Donthi","Edulapur","Gangaipalle","Gomaram","Gundlapalle","Konthanpalle","Kothapalle","Kothapet","Lingojiguda","Maqdumpur","Nawabpet","Pambanda","Pedda gottimukkala","Pillutla","Pothula boguda","Ratnapoor","Shabashpalle","Shivampet","Sikindlapur","Thimmapur","Usirikapalle"],
+"Tekmal": ["Achannapalle","Bardipur","Bodagat","Bodmatpalle","Dadaipalle","Dhanoora","Eklaspur","Hasanmohmadpalle","Kadloor","Korampalle","Kusangi","Malkapur","Palvancha","Shabad","Tamploor","Tekmal","Yelkurthi","Yellampalle","Yellupet_1","Yellupet_2","Yelupugonda"],
+"Toopran": ["Allapur","Brahmanapalle","Datarpalle","Ghanpur","Gundareddipalle","Hussainpur","Immapur","Islampur","Jandapallyy","Kistapur","Konaipalle (pattibegampet)","Malkapur","Nagulapalle","Narsampally patti velur","Padalpalle","Ravelli","Toopran_1","Vattur","Venkatapur @ pattitupran","Venktaipalle","Yavapur"],
+"Yeldurthy": ["Achampet","Andugulapalle","Bandaposanpalle","Damarancha","Dharmaram","Edulapalle","Esvantharaopet","Hakimpet","Hastalpur","Koppulapalle","Kuknoor","Lingareddipalle","Manepalle","Mangalparthy","Mannevar jalalpur","Masaipet","Mellor","Peddapur","Ramanthapur","Settipalle kalan","Uppulingapur","Yeldurthy"],
+"Adavidevulapalli": ["Adividevulapally","Balnepally","Chityala","Molkacherla","Mudimanikyam","N-f"],
+"Anumula": ["Ambatpally","Annaram","Anumula","Ibrahim peta","Kosalamarri","Kothapally","Kummarikunta kalva","Kupaspally","Marepally","Mukkamala","Narayana poor","Palem","Peruru","Pulimamidi","Ramadugu","Srinadhapuru","Thimmapuru","Venkatadri palem","Yacharam"],
+"Chandampeta": ["Achampet (p) chandampet","Bollaram p (munagal)","Chandampet","Chitriyala","Gagillapur","Gunti pally","Kambhalapally","Mududandla","Murpunuthala","N-f_1","N-f_2","N-f_3","N-f_4","N-f_5","N-f_6","Pogilla","Polepally - gannerpalli","Rekula valyam","Rekulagadda","Teldevarapally","Yalmalamanda"],
+"Chandur": ["Angadipeta","Bangarigadda","Bodangparthy","Chamala pally","Chandur (ct)","Donipamula","Gattuppal","Gundrepally","Idikuda","Kastala","Kondapuram","Kummandaniguda","Nermata","Pullemla","Shirdepally","Theretpally","Thummalapally","Udtalapally"],
+"Chinthapally": ["Anajipur","Chinthapally","Gadiyagouraram","Godakandla","Homanthalapally","Kokkirala gouraram","Kurma palle","Kurmedu","Madhanapuru","Mallareddypally","Nasarla pally","Nelvalapally","P.k. mallepally","Polepally ramnagar","Sakalsere palle","Takkalapally","Teeded","Tirumalapur","Ummapuram","Upparapally","Varkal","Vinjamoor"],
+"Chityal": ["Aipoor","Chinakaparthy","Chityal","Elikatte","Gundrampally","Nerada","Parepally","Peddakaparthy","Pittampally","Shivaneni gudem","Sunkenepally","Tallavellamla","Urumadla","Vanipakala","Veliminedu","Wattimarthy"],
+"Dameracherla": ["Dhamarcherla","Dilvarpuram","Irkigudem","Kallepalli","Keshavapuram","Kondrapole","Kothapalli","Narsapur","Thallaveerappaguda","Thimmapur","Ulshayapalem","Veerla palem","Wadapalli"],
+"Devarakonda": ["Devarakonda (ct)","Gottimukkala","Iddampally","Kacharam","Komme palle","Kondabheemana palle","Madmadka","Mudigonda","Mynam palle","Padamati palle","Penchikalpahad","Sere palle","Shakavally","Tatikole","Turupu palle","Yepoor"],
+"Gundlapally": ["Bogguladona","Bollana palle","Brahmana palle","Burhanpur","Cherkupalle","Dasarinemalipur","Gonaboina palle","Gonakole","Gundla palle","Gundlatipparthi varipalle","Kamadenigowararam","Kame palle","Kandukur","Khanapur","Kutubshapur","Rahmatpur","Singaraj palle","T.gowararam","Towklapur","Vavilkole","Veeraboina palle","Yerraram"],
+"Gurrampode": ["Amlur","Bollaram (p) koppole","Chamled","Chepur","Chinthagudam","Gurram pode","Junuthla","Kacharam (p) koppole","Kalwapalle","Kondapur","Koppole","Kothlapur","Mailapur","Makka palle","Mosangi","Mulkala palle","Nadikuda","Ootlapalle","Palle pahad","Palwai","Parla palle","Pochampalle","Shagazipur","Sulthanpur","Tenepalle","Thanedar palle","Vattikode"],
+"Kanagal": ["Boinapalle","Bommepalle","Budemerla palle","Charla gouraram","Chetla chennaram","Chinna madharam","Derveshpur @ dharvespur","Dorepalle","Gaddamvari yadavally","Hydlapur","Iruganti palle","Jangamai guda","Kangal","M.gowraram","Mangena palle","Mylaram","Narsimhapur","Pagidi marri","Parvathagiri","Ponugode","Regatla","Serilingotam","Shahabdulla pur","Turka palle"],
+"Kattangur": ["Aiti pamula","Bollepalle","Cheruvannaram","Dugnevally","Eduluru","Ismail palle","Kalmera","Kattangoor","Kurumathy","Mallaram","Munukuntla","Pamanagundla","Pandena palle","Parada","Pittam palle","Ramachandrapuram","Thimmapur","Yersaniguda"],
+"Kethepally": ["Bheemavaram","Bonda palem","Bopparam","Cheruku palle","Gudiwada","Inpamula","Ippala gudem","Kasangode","Kethepalle","Koppole","Korla pahad","Thungathurthy","Uppala pahad"],
+"Kondamallepally": ["Atchampet","Channamneni palle","Chennaram","Chinna adiserla palle","Chinthakuntla","Doniyala","Fakeerpoor","Gazinagar","Gummadavally","Kolmunthal pahad","Kondamallapalle (ct)","Pendli pakala","Vardhamaniguda"],
+"Madugulapally": ["Abhanga puram","Agamothkur","Bheeman palle","Bommakal","Cheruvu palle","Chirumarthy","Dacharam","Gajalapur","Gopalpur","Indugula","Kalvalapalem","Kannekal","Kesavapuram","Koyalpahad","Kukkadam","Madugula palle","Narasimhula gudem","Pamulapahad","Thopucherla"],
+"Marriguda": ["Anthampet","Bhatla palle","Damera bheeman palle","Indurthi","Khudabaksh palle","Kondur","Lankalapalle","Marriguda","Metichandapur","Namapur","Sarampet","Somrajguda","Tammad palle","Tirgandla palle","Vatti palle","Venkepalle","Yergandlapalle"],
+"Miryalaguda": ["Ailapuram","Alagadapa","Annaram","Chillapuram","Chintha palle","Goguvanigudem","Gudur","Hydla puram","Kalva palle","Kista puram","Kothaguda","Miryalaguda","Mulkalkalva","Nandi pahad (part)","Narsimhulaguda","Rayanpalem","Rudraram","Tadkamalla","Takkellapahad","Thunga pahad","Venkatadri palem","Vootla palle","Yadgarpalle","Zaptiveerappaguda"],
+"Munugode": ["Chalmeda","Cheekati mamidi","Cholledu","Gudapur","Ipparthy","Jamasthanpalle","Kalavalapalle","Kalwakuntla","Kaslapuram","Kistapuram","Kompalle","Koratikal","Kothularam","Marrigudem","Munugode","Palivela","Pulipalpula","Rathi palle","Singaram","Solipuram","Velmakanne","Vookondi"],
+"Nakrekal": ["Adavi bollaram","Chandam palle","Chandupatla","Gorenkal palle","Kadaparthy","Mandalapur","Mangali palle","Marrur","Nakrekal (ct)","Nellibanda","Nomula","Ogode","Palem","Tatikal","Tettekunta","Vallabhapur"],
+"Nalgonda": ["Ammaguda","Anantharam","Annareddy guda","Anneparthy","Appaji peta","Arjalabavi (og)","Budharam","Chandan palle","Chennaram","Cherlapalle","Dandampalle","Donakal","G.k.annaram","Gandhamvarigudem (og)","Gollaguda (r) (og)","Gundlapalle","K.kondaram","Kanchanpalle","Khajiramaram","Khudavanpur","Kotha palle","M.domalapalle","Mamillagudem","Marriguda (og)","Medla duppala palle","Musham palle","Nalgonda","Nalgonda (r) (og)","Narsing batla","P.domalapalle","Panagallu (r) (og)","Rasoolpur","Suraram","Thoragal","Velugu palle"],
+"Nampally": ["Bandathimmapur","Brahmana gouraram","Chittam pahad","Damera","Deveth palle","Fakirpur","Ganugu palle","Ghatlamallapalle","Hydelapur","Kethpalle (p) pasnoor","Kundellatirumalagiri","Mallaparajpalle","Medlavai","Mohamadapur","Musti palle","Nampalle","Nerallapalle","Pagidi palle","Pasnoor","Peddapur","Rebelli","Sharabhapur","Sunkishala","Swamulavari lingotam","Thummala palle","Tirumalagiri","Tungapathi gouraram","Vadde palle"],
+"Narketpally": ["Akkene palle","Akkenepalle vari lingotam","Auravani","Brahmanvellemla","Cherughat","Chippala palle","Choudampalle","Madhayedavally","Mandra","Nakkala palle","Narketpalle","Nemmani","Pothineni palle","Sabbidiguda","Sha palle","Thirumalagiri","Thondalvai","Yellareddy guda"],
+"Neredugommu": ["Batchapur","Dasarla palle","Kacharaj palle","Kethepalle","Kotha palle","Neradugommu","N-f_1","N-f_10","N-f_2","N-f_3","N-f_4","N-f_5","N-f_6","N-f_7","N-f_8","N-f_9","Peddamunigal","Perval","Timmapuram"],
+"Nidmanoor": ["Bankapur","Bokkamanthula pahad","Gunti palle","Marpaka","Mupparam","Nidamanur","Regulagadda","Sakhapur","Surepalle","Tummadam","Vallabhapur","Vempahad","Venigandla","Vutkur","Yerraballi"],
+"Pedda adesherlapally": ["Azmapur","Bheemana palle","Chilka marry","Dugyala","Ghanpalle","Ghanpur","Ghatnemilipur","Gudipalle","Keshamneni palle","Madhapur","Mallapuram","Medaram","Nambapuram","N-f_1","N-f_2","N-f_3","N-f_4","N-f_5","N-f_6","Pedda adiserla palle","Peddagummadam","Polkampalle","Rollakal","Surepalle","Tirumalagiri (patti dugyal)","Vaddipatla","Vankavalyampahad","Yellapuram"],
+"Peddavoora": ["Chalakurthy","Chintapalle","Garnekunta","Kothalur","Lingampalle","Nandikonda","Parvedula","Peddavoora","Pinnavura","Polepalle","Pothnur","Pulicherla","Sangaram","Sirasanagandla","Sunkishala","Tammadapalle","Teppalamadugu","Thungathurthy","Velmaguda","Vijayapuri north (ct)","Vutlapalle"],
+"Shaligouraram": ["Adlur","Akaram","Ammanabole","Baironi banda","Chittalur","Gurijala","Itukula pahad","Madaram kalan","Manimadde","Nulagadda kothapalle","Patha kondaram","Perka kondaram","Sali lingotam","Saligouraram","Thakkedla pahad","Tudimidi","Uppalancha","Utukur (or) utkoor","Vaddi pamula","Vallala","Vangamarthi"],
+"Thipparthy": ["A.duppala palle","Gaddikondaram","Ganganapalem","Indloor","Jangamreddi gudem","Kankanala palle","Keshrajpalle","Mamidala","Pajjur","Rajupeta","Sarvaram","Thanderpalle","Thipparthi"],
+"Tirumalagiri sagar": ["Alwala","Chintalapalem","Jammanakota","Kompalle","Konerpuram","Nehatapur","Nellikal","Rajavaram","Silgapur","Sreerampalle","Thimmaipalem","Thuniki nuthula","Tirumalagiri","Yellapuram"],
+"Tripuraram": ["Anjana palle","Annaram","Babasahebpet","Bejjikal","Borrai palem","Brundavanpur","Dugge palle","Kamareddi gudem","Kampa sagar","Kampala palle","Konthala palle","Matur","Narlakantiguda","Pedda devula palle","Poosal pahad","Ragadapa","Thripuraram"],
+"Vemulapally": ["Amangal","Annapareddiguda","Buggabavi guda","Chali chimala palem","Gandravaniguda","Itikyala","Kamepalle","Molka patnam","Mundlapahad","Ravula penta","Salkunur","Settipalem","Thimmareddiguda","Vemulapalle"],
+"Armoor": ["Aloor","Amdapur","Ankapur","Armoor","Bardipur","Chepur","Degaon","Fathepur","Gaggupalle","Govindpet","Issapalle","Khanapur","Komanpalle","Kotha armur","Macherla","Magdi","Mamidipalle (og)","Manthani","Mirdapally","Perkit (og)","Pipri","Rampur","Surbiriyal"],
+"Balkonda": ["Balkonda","Bodepalle","Chittapur","Jalalpur","Keshapur","Kisannagar","Kojan kothur","Nagapur","Ratnapur","Sangam","Vannel bashirabad"],
+"Bheemgal": ["Babanagar","Babapur","Bachanpalle","Bejjora","Bheemgal","Changal","Devan palle","Gangarai","Gongappul","Jagriyal","Karepalle","Kupkal","Lingapurchouth","Mendhora","Muchkur","Pallikonda","Pedda bheemgal","Pipri","Puranipet","Rahathnagar","Salampur","Sikandrapur","Thallapalle"],
+"Bodhan": ["Achampalle (r)","Amdapur","Bardipur","Bhandarpalle","Bhavanipet","Bhiknalli","Bodhan","Bodhan (r)","Erajpalle","Fathepur","Hangarga","Hunsa","Jadijamalpur","Kaldurthi","Khajapur","Khandgaon","Komanpalle","Kopperga","Ladmavandi","Lakmapur","Langadapur","Machapur","Mandharna","Mavandi (kalan)","Mavandi (khurd)","Minarpalle","Mithapur","Naganpalle","Nagora","Narsapur","Ootpalle","Pegadpalle","Penta kalan","Penta khurd","Rampur","Salampad","Saloora","Sangam","Siddapur","Taggelli"],
+"Chandur": ["Chandur","Ghanpur","Karegaon","Laxmapur","Medpalle"],
+"Dharpally": ["Challagarga","Dammannapet","Dharpalle","Dubbaka","Govindpalle","Kesaram","Konepalle","Mailaram","Ramadugu"],
+"Dichpally": ["Amruthapur","Arepalle","Bardipur","Bibipur","Dichpalle","Doosgaon","Ghanpur (ct)","Kamalapur","Koratpalle","Mentrajpalle","Mittapalle","Mullangi","Nadepalle","Rampur","Suddepalle","Suddulam","Yanampalle"],
+"Indalwai": ["Donkal","Gannaram","Gouraram","Indalwai","Lolam","Mallapur","Nallavalle","Sirnapalle","Thriambakpeta","Vengalpad"],
+"Jakranpally": ["Argul","Brahmanpalle","Chintalur","Jakranpalle","Kaligote","Keshpalle","Kolipaka","Lakshmapur","Madhapur","Manoharabad","Munpalle","Narayanpet","Padkal","Poppalpalle","Sikindrapur","Thorlikonda"],
+"Kammarpally": ["Basheerabad","Choutupalle","Dammannapet","Dammanpet (ameernagar)","Devakkapet","Guntepalle","Hasakothur","Inayat nagar","Kammar palle","Konapur","Konasamandar","Lakshmapur","Nagapur","Narsapur","Reachpalle","Uploor"],
+"Kotagiri": ["Adkas palle","Amrapur","Bareedpur","Baswapur","Domaledgi","Eklaspur","Ethonda","Fakeerabad","Gannavaram","Hangerga","Hegdoli","Humnapur","Jallapalle","Kallur","Karegoan","Kodcherla","Kollur","Kotgiri","Kothapalle","Lingapur","Malkapur","Mirzapur","Pothangal","Rampur","Rozapur","Sailampur","Sompur","Sudlam","Sunkini","Takli","Tirmalapur","Vallabhapur","Yadgarpur","Zainapur"],
+"Makloor": ["Amrad","Bonkanpalle","Borgaon (kalan)","Chikli","Chinnapur","Dharmora","Gottimukkala","Gunjali","Gutpa","Kalladi","Lakhmapur","Madanpalle","Makloor","Mamdapur","Mamidipalle","Manik bhandar","Metpalle","Mullangi (binala)","Singampalle","Vaddatipalle","Vallabhapur","Venkatapur"],
+"Mendora": ["Bussapur","Chakeriyal","Doodgaon","Kodicherla","Mendora","Savel","Soanpet (ct)","Velgatur"],
+"Morthad": ["Dharmora","Donkal","Donpal","Mortad","Palem","Shetpalle","Sunkat","Thimmapur","Vaddiyat"],
+"Mosara": ["Bajidapur","Chintakunta","Govoor","Mosra","Moulalipur","Thimmapur"],
+"Mugpal": ["Amrabad","Badsi","Bhairapur","Borgaon (p)","Chinnapur","Kalpole","Kanjar","Kulaspur","Manchippa","Mudakpalle","Mugpal","Nyalkal","Sirpur","Thana khurd","Yellamkunta"],
+"Mupkal": ["Kothapalle","Mukpal","Nagampet","Nallur","Renjarla","Vempalle","Venchariyal"],
+"Nandipet": ["Ailapur","Annaram","Badgoni","Bazarkothur","C.h.kondoor","Chimrajpalle","Dattapur","Donkeshwar","Gadepalle","Gangasamundar","Joorpur","Kamtam","Khudavandapur","Komatpalle","Kushtapur","Lakkampalle","Mallaram","Marampalle","Mayapur","Nandipet","Narkodh","Nikalpur","Noothpalle","Shahpur","Siddapur","Sirpur","Srirampur","Talveda","Tondakur","Ummeda","Vannel(khurd)","Velmal"],
+"Navipet": ["Abbapur (b)","Abbapur (m)","Abhangapatnam","Alzapur","Ananthagiri","Ankampalle","Binola","Dharmaram","Dharyapur","Fathenagar","Jannipalle","Kamalapur","Kandepalle","Khadirabad","Kosli","Lingapur","Maddepalle","Mahantham","Mittapur","Mokanpalle","Nagepur","Naleshwar","Nandigaon","Narayanpur","Navipet","Nizampur","Pothangal","Rampur","Shaikhapur","Shiranpalle","Tungini","Yamcha"],
+"Nizamabad rural": ["Dharmaram","Gopanpalle","Gundaram","Jalalpur","Kalur","Keshapur","Khanapur","Kondur","Laxmapur","Malkapur","Malkapur (j)","Mallaram","Mubaraknagar","Muthakunta","Palda","Pangra","Sarangapur","Seripur","Tirmanpalle"],
+"Nizamabad south": ["Nizamabad"],
+"Renjal": ["Bhagepalle","Boregaon","Dupalle","Kalyapur","Kandakurthi","Kunepalle","Neela","Ranjal","Satapur","Tadbiloli"],
+"Rudrur": ["Akbar nagar","Ambam","Boppapur","Chikkadpally","Kondapur","Lingampalle","Raikur","Ramanpalle","Rudrur","Siddapur"],
+"Sirikonda": ["Belur","Chimanpalle","Chinna walgot","Gadkole","Gargepahad","Gudilingapur","Honnajipet","Hussainnagar","Kondapur","Kondur","Kotalapalle","Mailaram","Musheernagar","Nyavandi","Pakhal","Pandimadugu","Pedda walgot","Pothnur","Ramadugu","Ravutla","Rekulapalle","Sirkonda","Thatpalle","Thumpalle"],
+"Vailpoor": ["Aklur","Ameenapur","Anksapur","Janakampeta","Komanpalle","Kothapalle","Kuknur","Lakhora","Mothe","Narkhoda","Padgal","Pochampalle","Ramannapet","Sahebpet","Velpur","Venkatapur","Wadi"],
+"Varni": ["Humnapur","Jakore","Jalalpur","Khunipur","Mallaram","Pedmal","Rajpet","Sayeedpur","Shankaoora","Siddapur","Taglepalle","Varni"],
+"Yedapally": ["Ambam","Brahammanpalle","Ibrahimpur","Jaithapur","Jamlam","Jankampet","Kurnapalle","Mallepahad","Mangalpahad","Pocharam","Thanekalan","Yedpalle"],
+"Yergatla": ["Battapur","Domchanda","Gumeriyal","Tadla rampur","Tadpakal","Thurat","Yergatla"],
+"Abdullapurmet": ["Abdullapur","Akbarja","Anajpur","Bacharam","Balijaguda","Bandaraviryal","Batasingaram","Daira","Gowrelli","Guntapalle","Inamguda","Kawadipalle","Koheda","Laskerguda","Manneguda (og)","Mazidpur","Munganoor (og)","Omerkhan daira (ct)","Piglipur","Qutubullapur","Sagarpump","Surmaiguda","Tharamathipet","Thimmaiguda","Toroor (faroor) (og)","Turkayamjal (ct)"],
+"Amangal": ["Akuthotapalle","Amangal","Chennampalle","Cherikonda pattikalwakurthy","Cherikondapattipadkal","Konapur","Polepalle","Ramanuthula","Settipalle","Singam palle","Vithaipalle"],
+"Balapur": ["Jalpalle (og)","Papayakumandan"],
+"Chevella": ["Allawada","Aloor i","Aloor ii","Aloor iii","Anantawaram","Bastepur","Chanvelli","Chevella","Damergidda","Dearlapalle","Devarampalle","Devuni erravelly","Gollapalle","Gundal","Hasthepur","Ibrahimpalle","Kammeta","Kanduwada","Kesavaram","Khanapur","Kistapur","Kowkuntla","Kummera","Malkapur","Mirjaguda","Mudimyal","Naincheru","Nowlaipalle","Nyalata","Orella","Pamena","Ravulapalle (khurd)","Regadghanapur","Tallaram","Tangedapalle","Yenkepalle"],
+"Farooqnagar": ["Allisabguda","Annaram","Bheemaram","Buchchiguda","Burgul","Chattanpalle","Chilkamarri (chelka)","Chinchode","Chowlapalle (west)","Dooskal","Elkatta","Farooqnagar (ct)","Gantlavelli","Gundlakunta","Hajipalle","Jogammaguda","Kammadanam","Kamsanpalle","Kandivanam","Kishannagar","Kondannaguda","Kongaguda","Madhurapur","Mogalgidda","Nagulapalle","Raikal","Ramakrishnapur","Rangasamudram (yellampalle)","Seriguda madhurapur","Solipur","Suryaraoguda","Thimmajipalle","Veljerla ãƒæ’ã‚â¢ãƒâ¢ã¢â‚¬å¡ã‚â¬ãƒâ¢ã¢â€šâ¬ã…â€œ iii","Veljerla-i","Veljerla-ii","Vittyal"],
+"Gandipet": ["Alizapur (og)","Bairagiguda","Bandlaguda (jagir) (ct)","Gandamguda","Gandipet","Ghmc (m corp. + og) (part)","Gungurthy","Himayathsagar","Janibegum","Khanapur","Kismatpur (ct)","Kokapet (og)","Manchirevula","Manikonda (jagir) (og)","Manikonda (khalsa) (og)","Maqtha kousarali","Narsingi (ct)","Neknampur (og)","N-f","Panjashajamal bowli","Peeramcheru","Pokkalwada","Puppalguda (og)","Sikanderguda","Vattinagulapalle"],
+"Hayathnagar": ["Ghmc (m corp. + og) (part)_1","Ghmc (m corp. + og) (part)_2","Hathiguda (og)","Injapur (og)","Kalvancha (og)","Kuntloor (og)","Marripalle","Pasmamla","Pedda amberpet (kalan) (og)","Pochampalle wada","Tatti annaram (og)","Tatti khana (og)"],
+"Ibrahimpatnam": ["Adibatla","Alimiyakunta","Bongloor","Chintapalleguda","Dandumailaram","Ferozguda","Ibrahimpatnam (bagath) (ct)","Ibrahimpatnam (khalsa)","Ismailshapampu","Kappapahad","Kongara kalan","Mangalpalle","Muknoor","Naganpalle","Narrepalle","Pocharam","Polkampalle","Rainguda","Raipole","Ramdaspalle","Ramreddiguda","Tadlakalva","Tattikhana","Toolekalan","Turkaguda","Yeliminedu","Yengalaguda","Yerrakunta"],
+"Jilled chowdergudem": ["Chalivendrampalle","Chegireddy ghanpur","Chennareddiguda","Edira","Gunjalapahad","Gurrampalle","Hazipet","Indranagar","Jakaram","Jilled","Malkapahad","Padmaram","Pedda yelkicherla","Raviryal","Thoompalle","Tummalapalle","Vanampalle","Veerannapet"],
+"Kadthal": ["Chellampalle","Ekrajguda","Kadthal","Karkalpahad","Makthamadharam","Mudwin","Nagireddiguda","Nyamathapur","Ravichedu","Salarpur","Takrajguda","Vampuguda","Vasudevapur"],
+"Kandukur": ["Akberja","Allikhanpalle","Annojiguda","Bachupalle","Chippalpalle","Dasarlapalle","Debbadaguda","Dhannaram","Gafoornagar","Gudoor","Gummadavalle","Jaithwaram (khalsa)","Jaithwaram (maqta)","Kandukur","Kothur","Kufarchandguda","Lemoor","Madhapur","Meerkhanpet","Mohammadnagar","Mucherla","Murlinagar","Nednur","Panjaguda","Peruguguda","Pulumamidi","Rachloor","Sarvaravulapalle","Thimmaipalle","Timmapur"],
+"Keshampet": ["Alwal","Bhairkhanpalle","Bodanampalle","Chintakuntapalle","Chowlapalle(east)","Dattaipalle","Eklaskhanpeta","Ippalapalle","Kakunoor","Keshampet","Kothapeta","Lemamidi","Lingamdana","Nirdavelly","Papireddiguda","Pomalpalle","Sangam","Santhapur","Thommidirekula","Vemulanarva"],
+"Kondurg": ["Agiryal","Bhirampalle","Cherukupalle","Chinnayelkicherla","Chukkammet","Govindapur","Kondurg (e)","Kondurg(west)","Mahadevpoor","Mutpoor","Parvathapur","Regadi chilakamarri","Somarampad","Srirangapur","Tangellapalle","Tekulapalle","Ummenthyal","Uttaraspalle","Venkiryal","Viswanathpur"],
+"Kothur": ["Gudur","Inmulnarva","Khajiguda","Kodicherla","Kothur (ct)","Mallapur","Penjerla","Seriguda (bhadrai palle)","Siddapur","Theegapur","Thimmapur"],
+"Madgul": ["Andugul","Anneboinpalle","Appareddipalle","Arkapalle","Aurpalle","Brahmanapalle","Dodlapahad","Girikothapalle","Irwin","Kalakonda","Kulkulpalle","Madgul","Nagilla","Ramanampalle","Suddapalle"],
+"Maheshwaram": ["Akanpalle","Almasguda","Ameerpet","Baghmankhal","Dabilguda","Dilwarguda","Dubbacherla","Gangaram","Ghatpalle","Gollor","Imamguda","Kalwakole","Kollapadkal","Kongar khurd (a)","Kongar khurd (b)","Maheswaram","Malikdanguda","Mankhal","Mansanpalle","Mohabatnagar","Nagaram","Nagireddipalle","Nandipalle","Pendyal","Porandla","Raviryal","Sardar nagar","Sirigiripur","Sreenagar","Subhanpur","Thummaloor","Toopra khurd","Venkannaguda"],
+"Manchal": ["Agapalle","Arutla","Asmatpur","Bandalemoor","Bodakonda @ penikarla thanda","Chandkhanguda","Cheeded","Chittapur","Dadpalle","Jainammaguda","Japala","Kagazghat","Khanapur","Lingampalle","Loyapalle","Mallikarjunaguda","Manchal","Manorabad","Nallacheru","Nomula","Rangapur","Sabithnagar","Sreemanthguda","Thallapalliguda","Thippaiguda"],
+"Moinabad": ["Amdapur","Aziznagar","Bakaram jagir","Bangaliguda","Chandanagar","Chilkoor","Chinna mangalaram","Chinnashapur","Himayathnagar","Kanakamamidi","Kethireddipalle","Medipalle","Mothukupalle","Murthuzaguda","Nagireddiguda","Nakkalapalle","Nazeebnagar","Peddamangalaram","Reddipalle","Sajjanpalle","Sriramnagar","Surangal","Tolkatta","Venkatapur","Yenkepalle","Yethbarpalle"],
+"Nandigama": ["Chegur","Edulapalle","Mamidipalle","Nandigam","Veerlapalle"],
+"Rajendranagar": ["Ghmc (m corp. + og) (part)_1","Ghmc (m corp. + og) (part)_2","Ghmc (m corp. + og) (part)_3","Ghmc (m corp. + og) (part)_4","Ghmc (m corp. + og) (part)_5","Hydershakot (og)","Pallecheru","Sogbowli"],
+"Saroornagar": ["Almasguda (og)","Badangpet (ct)","Balapur (og)","Chintalakunta (og)","Dawoodkhanguda (og)","Ghmc (m corp. + og) (part)_1","Ghmc (m corp. + og) (part)_2","Jillalguda (ct)","Kothapet (ct)","Kurmalguda (og)","Mallapur (og)","Mamidipalle (og)","Medibowli (og)","Meerpet (ct)","Nadargul (og)","Renukapur (og)","Venkatapur (og)"],
+"Shabad": ["Ananthawaram","Bhongirpalle","Bobbilgam","Chandenvalle","Damerlapalle","Etlaerravaly","Hayathabad","Kakloor","Kesavaram","Komerabanda","Machanpalle","Maddur","Manmarri","Nagarkunta","N-f","Obagunta","Peddaved","Polaram","Pothugal","Rangapur","Regadidoswada","Rudraram","Shabad","Solipet","Tadlapalle","Tirumalapur"],
+"Shamshabad": ["Ammapalle","Bahadurguda","Cherlaguda","Chowderguda","Devatabowli","Gandiguda","Ghansimiaguda","Golkonda kalan","Golkonda khurd","Gollapalle kalan","Gollapalle khurd","Hamidullanagar","Hariguda","Jukal","Kacharam","Kaveliguda","Kishanguda","Kolbowidoddi","Kothwalguda","Langerguda","Madanpalle","Malkaram","Maqtabahadur ali","Muchintal","Nanajpur","Narkhuda","Ootpalle","Palmakole","Palugu gutta","Pashambanda (og)","Peddashapur","Peddatopra","Posettyguda","Ramanujapur","Rasheedguda","Rayannaguda","Sanghiguda","Satamrai (og)","Sayyed guda","Shahjadi begum (og)","Shamshabad (ct)","Shankarapur","Sultanpalle","Tondpalle"],
+"Shankarpalle": ["Anthappaguda","Bhulkapur","Chandippa","Donthanpalle","Fathepur","Gopularam","Hussainipur","Janwada","Kondakal","Kothapalle","Mahalingapuram","Maharajpet","Masaniguda","Mokila","Parveda (chanchalam)","Parveda khalsa","Proddutur","Ramanthapur","Ravalpalle kalan","Sankepalle (khalsa)","Sankepalle (paigah)","Shankarpalle","Singapur","Tangutoor","Yelwarthy","Yervaguda"],
+"Thalakondapally": ["Antharam","Badnapur","Chandradana","Cheepunuthala","Chennaram","Chukkapur","Garvipalle","Gattu ippalapalle","Julapalle","Khanapur","Lingarapalle","Medakpalle","Padakal","Rampur","Seriramakrishnapur","Talakondapalle","Thimmapur","Veljala","Venkatapurpatti veljala","Venkatraopeta","Yadavalli"],
+"Yacharam": ["Chintapatla","Chowderpalle","Gungal","Kothapalle","Kurmidda","Mandigowrelly","Manthangoud","Manthangowrelly","Medpalle","Mogullavampu","Nakkarta","Nallavelly","Nanaknagar","Nandiwanaparthy","Nazdik singaram","Sultanpur","Thakkellapalle","Thatiparthy","Tulekhurd","Yacharam"],
+"Bayyaram": ["Bayyaram","Dharmapuram","Gandhampalle","Gowraram","Gurimella","Irsulapuram","Jagathraopet","Kachanapalle","Kambalapalle","Kommavaram","Kothapeta","Lingagiri","Motlathimma puram","Ramachandra puram","Singaram","Uppalapadu","Venkatapuram"],
+"Chinnagudur": ["Chinnagudur","Jayyaram","Uggampalle","Veesampalle"],
+"Danthalapalle": ["Agapet","Bodlada","Danthalapalle","Datla","Gunnepalle","Kalvapalle","Kummarikuntla","Peddamupparam","Ramavaram","Reponi","Vemulapalle"],
+"Dornakal": ["Ammapalem","Burgupahad","Chilkodu","Dornakal (ct)","Gollacherla","Gurralakunta","Kannegundla","Mannegudem","Mulkalapalle","Perumandla -sankesa","Ravigudem","Uyyalawada","Vennaram"],
+"Gangaram": ["Bhavurdagonda","Bhupalapatnam","Chinthaguda","Doravarivempalle","Dubbaguda","Gangaram","Jangalapalli","Kamaram","Katrenam","Kodiselamitta","Komatlagudem","Madaguda","Mahadevunigudem","Mamadigudem","Marriguda","Narsiguda","Pandem","Peddayellapur","Ponugundla","Ramaram","Thirumalgandi"],
+"Garla": ["Buddharam","Chandragiri","Garla","Gopalapuram","Kannaigudem","Maddi vancha","Mulkanoor","Pocharam","Pulluru","Rampuram","Seripuram"],
+"Gudur": ["Adivarampet","Apparajpalle","Ayodhyapur","Bhupathipet","Boddugonda","Bollepalle","Chinnayellapur","Damaravancha","Gajulagattu","Govindapur","Gudur","Gundenga","Keshavapatnam","Kolhapuram","Kongaragidda","Macherla","Madanapur","Matwada","Naikpalle","Neelavancha","N-f","Ootla","Ponugodu","Rajanpalle","Seetanagar","Teegalveni","Thimmapur","Veerampet","Vengapet"],
+"Kesamudram": ["Annaram","Arpanapalle","Beriwada","Dhadnnasari","Intikanne","Inugurthy","Kalwala","Katrapalle","Kesamudram","Komatipalle","Korukondapalle","Mahamoodpatnam","Narayanpur chinnamupparam","Penugonda","Rangapuram","Tallapoosapalle","Upparapalle"],
+"Kothaguda": ["Ankannagudem","Bakkachintalapadu","Bathulapalle","Bothavaniguda","Devavaram","Durgaram","Enchaguda","Eshwaragudem","Gopalpur","Govindapur","Gundam","Gundrapalle","Gunjedu","Ippalapagidapur","Irukulakunta","Jangalapally","Jangavaniguda","Karlai","Karnegandi","Kishtapur","Konapur","Kothagudem","Kothapalle","Kundampalle","Manchanapally","Mokallapalle","Murraigudem","Musmi","Mylaram","Neelampalle","Ootai","Pegadapalle","Pogallapalle","Polaram","Puttabhupathi","Rampur","Rangappagudem","Routhugudem","Rudravaram","Sadireddipalle","Thativarivempalle","Thimmapur","Upparagudem","Vajjavanigudem","Velbelly","Vurabaka","Yedullapalle","Yerravaram"],
+"Kuravi": ["Ayyagaripalle","Balapala","Chinthapalle","Gundrathimadugu","Kampalle","Kancherlagudem","Kandikonda","Kuravi","Madugulagudem","Mogilicherla","Nallela","Narayanapur","Nerada","Rajole","Seerole","Sudanpalle","Tallasankeesa","Thattupalle","Thirumalapur","Upparagudem"],
+"Mahabubabad": ["Ammangal","Anantharam","Bethole","Chengapuram","Edulapusapalle","Gumudur","Jamandlapalle","Jangligonda","Khambhalpalle","Laxmipur","Madhavpuram","Mahabubabad (ct)","Mallial","Mudupugal","Nadiwada","Parvathagiri","Reddial","Shingaram","V.s.lakshmipur","Vemnoor"],
+"Maripeda": ["Abbaipalem","Anepuram","Beecharajpalle","Burhanpur","Chillamcherla","Dharmaram","Erjerla","Galivarigudem","Giripuram","Gundepudi","Maripeda","Neelkurthy","Purushothamaigudem","Rampuram","Tallaookal","Thanamcherla","Ullepalle","Veeraram","Yellampet"],
+"Narsimhulapet": ["Akkirala","Bojjannapet","Gundamrajupalle","Jayapuram","Kausalyadevipalle","Kommulavancha","Mungimadugu","Narsimhulapet","Peddanagaram","Vanthadupula"],
+"Nellikudur": ["Aleru","Bhrammanakothapalle","Chinnanagaram","Kachikal","Madanathurthy","Mecharajupalle","Munigalaveedu","Nainala","Narsimhulagudem","Nellikudur","Rajulakothapalli","Ramanjapuram","Ravirala","Sriramgiri","Vavilala","Yerrabelligudem"],
+"Peddavangara": ["Authapur","Bommakal","Chinnavangara","Chityal","Gantlakunta","Koripalle","Peddavangara","Pochanpalle","Pocharam","Waddekothapalle"],
+"Thorrur": ["Ammapur","Bonthupalli","Cherlapalem","Chikataipalem","Chinthalapalle","Fathepur","Gopalagiri","Gurthur","Haripriyal","Kantaipalem","Karkal","Khanapur","Kommanapalle","Madipalle","Matedu","Nancharimadur","Polepalle","Somaram","Thorrur (ct)","Velikatte","Venkatapur","Zamisthanpur"],
+"Amarchintha": ["Amarchinta","Chandraghad","Chinthareddipalle","Dharmapur","Erladinne","Kankanvanipalle","Kistampalle","Mastipur","Mittanandimalla","Nagalkadumur","Nandimalla","Pamireddipalle","Rangapur","Singampeta"],
+"Atmakur": ["Arepalle","Atmakur (ct)","Balakistapur","Devarapalle","Guntipalle","Jurial","Kathepalle","Khanapur","Medepalle","Motlampalle","Mulamalla","Pinnamcherla","Rechintala","Somsagar","Thippadampalle","Thoompalle","Veeraraghavapur"],
+"Chinnambavi": ["Ammaipalle","Ayyavaripalle","Bekkam","Chellepahad","Chinnamarur","Dagadapalle","Gaddabaswapuram","Kalloor","Koppunur","Lakshmipalle","Lingasanipalle","Miyapuram","Peddamarur","Solipuram","Velgonda","Vellatur"],
+"Ghanpur": ["Agaram","Almaipalle","Anpahad (d)","Anthaipalle","Appareddipalle","Garkasa (d)","Ghanpur","Kamaluddinpur","Malkapur","Malkimianpalle","Mamidimada","Manajipet","Parwathapur","Salkalapur","Shapur","Solipur","Suraipalle","Thirumalaipalle","Upparapalle","Venkatampalle"],
+"Gopalpeta": ["Buddharam","Chakalpalle","Chennur","Gopalpeta","Jain thirumalapur","Munnanur","Polkepahad","Thadparthy","Yedutla"],
+"Kothakota": ["Amadabakula","Amaravathinagar","Apparala","Boothpur","Cherlapalle","Kanaipalle","Kanimetta","Kothakota ward no.-0001","Miraspalle","Mummallapalle","Nancharammapet","Natavalli","Nirven","Palem","Pamapur","Pathajangamaipalle","Pullareddikunta","Ramakrishnapur","Ramnathpur","Rayanpet","Sankireddipalle","Satyahalli","Waddawata"],
+"Madanapur": ["Ajjakollu","Dantanoor","Duppalle","Dwarakanagar","Gopanpeta","Govindahalli","Karvena","Konnur","Kothapalle","Madanapur","Narsingapur","Nelividi","Ramanpadu","Shankarampeta","Thirumalaipalle"],
+"Pangal": ["Annaram","Bandapalle","Busireddipalle","Chikkepalle","Chintakunta","Davajipalle","Dondaipalle","Gopalpur","Jammapur","Kadirepad","Kethepalle","Kistapur","Madhavaraopalle","Mahammadapur","Mallaipalle","Nizamabad","Pangal","Rayanipalle","Remaddula","Sakhapur","Thellarallapalle","Vengalaipalle"],
+"Pebbair": ["Ayyavaripalle","Bunyadpur","Burdipadu","Chelimilla","Erladinne","Gummadam","Janumpalle","Kanchiraopalle","Munagamanudinne","Pathapalle","Pebbair","Penchikalpadu","Ramammapeta","Ramapur","Rameswarapur","Rangapur","Shakhapur (y)","Sugur","Thippaipalle","Thomalapalle","Yaparla"],
+"Peddamandadi": ["Alwal","Balijapalle","Chinnamandadi","Gatlakhanapur","Jagathpalle","Jangamaipalle","Maddigatla","Manigilla","Mojerla","Pamireddipalle","Peddamandadi","Veeraipalle","Veltoor"],
+"Revally": ["Bandaraipakula","Cheerkapalle","Chennaram","Kesampeta","Konkalapalle","Nagapur","Revally","Shanaipalle","Thalpunur","Vallabhanpalle","Yedula"],
+"Srirangapur": ["Gumpanpalle","Janampeta","Kamballapur","Nagarala","Nagasanipalle","Srirangapur","Thatipamula","Venkatapur (s)"],
+"Wanaparthy": ["Achutapur","Anjangiri","Ankoor","Appaipalle","Chandapur","Chimanguntapalle","Chityala","Dattaipalle","Jakkampalle","Kadukuntla","Khasimnagar","Kistagiri","Mentapalle","Nagavaram","Natchahalli","Peddagudem","Rajanagar","Rajapeta","Savaigudem","Srinivaspur","Venkatapur","Wanaparthy"],
+"Weepangandla": ["Bollaram","Dagada","Gopaldinne","Govardhangiri","Kalvarala","Korlakunta","Pulgarcherla","Sampatraopalle","Sanginepalle","Toomkunta","Vallabhapur","Veepangandla"],
+"Anthergaon": ["Akenpalli","Anthergaon","Brahmanpalli","Eklaspur","Goilwada","Kundanapalli","Maddiriyala","Mogalpahad","Murmur","Potyala","Raidandi (og)","Somanapalli","Yellampalli"],
+"Dharmaram": ["Abbapuram","Bommareddipalli","Botlavanaparthy","Chamanpalli","Dongathurthy","Kammarikhanpeta","Katkanpalli","Khanampalli","Khilavanaparthy","Kothur","Mallapur","Myadaram","Narsingapur","Paidichinthala palli","Pathipaka","Rachapalli","Sayampeta"],
+"Eligaid": ["Burhanmiyapet","Doolikatta","Elgaid","Lokapeta","Muppirithota","Narsapur","Ryakaldevpalle","Sivapalle","Sultanpur"],
+"Julapalli": ["Julapalli","Kachapur","Kummarikunta","Peddapur","Telukunta","Vadkapur"],
+"Kamanpur": ["Gundaram","Jalipalle","Julapalli","Kamanpur","Lingala","Mulkalapalli","Nagaram","Penchikalpet (og)","Perapalle","Rompikunta"],
+"Manthani": ["Adavisomanpalle","Adrial","Akkepalle","Ammagaripalle","Angulur(d)","Arenda","Bhatpalle","Bitpalle (k)","Chinnaodela","Eklaspur","Gaddalapalle","Gopalpur","Gumnoor","Gunjapaduga","Kannala","Kasipeta","Khanapur","Khansaibpeta","Kuchirajpalle","Lakkapur","Maidipalle","Mallaram","Mallepalle","Manthani","Nagaram","Nagepalle","Pandulapalle","Peddaodela","Puttapaka","Rachepalle","Sarnepalle","Siripuram","Uppatla","Venkatapur","Vilochavaram"],
+"Mutharam (manthani)": ["Adavisrirampur","Dharyapur","Ippalapalli","Kesanapalli","Khammampalli","Lakkaram","Matchupeta","Mutharam","Mydambanda","Odedu","Parupalli","Potharam","Sarvaram","Shatharajpalli","Sukravarampeta"],
+"Odela": ["Gudem","Gumpula","Indurthi","Kangarthi","Kolanoor","Komera","Madaka","Namsanipalle","Odela","Pothkapalli","Sanagonda"],
+"Palakurthy": ["Eesalathakkallapalli","Elkalapalli","Gudipalli","Jayyaram","Kannala","Kukkalagudur","Maredupalli","Munjampalli","Palakurthy (ct)","Putnoor","Ranapur","Undeda","Vemnoor"],
+"Peddapalli": ["Appannapet","Bhojannapet","Brahmanpalle(ps)","Cheekurai","Gattusingaram","Gowreddipeta","Kanagarthi","Kothapalle","Maredugonda","Mulasala","Nimmanapalle","Nittur","Palthem","Peddabonkur","Peddakalvala","Peddapalle (ct)","Raghavapur","Ragineedu","Rampalle","Rangampalle","Rangapur","Sabitham","Turkalamaddi kunta"],
+"Ramagiri": ["Adivarampet","Begumpet","Budhavarampet","Jallaram (ct)","Kalvacherla","Ladnapur","Lonkakesaram","Medipalli (w)","Mustiala","Nagepalli","Pannur","Rajapur","Ratnapur (ct)","Sundilla (og)","Upperlakesaram","Velgalpahad"],
+"Ramagundam": ["Lingapur (og)","Ramagundam"],
+"Srirampur": ["Edulapuram","Gangaram","Jafarkhanpet","Kistampet","Kunaram","Madipalle","Mallial","Mangapet","Mirzampet","Motlapalle","Pandilla","Peddampet","Pegadapalle","Rathupalle","Srirampur","Tharupalle","Vennampalle"],
+"Sulthanabad": ["Bhoopathipuram","Chinnabonkur","Chinnakalvala","Dubbapet","Garrepalle","Gattepalle","Gollapalle","Ithrajpalle","Kadambapur","Kanukula","Katnepalle","Kodurupaka","Mancharami","Miyapur","Neerukulla","Poosala","Rebbaldevipalle","Regadimaddikunta","Suddala","Sultanabad","Thogarrai"],
+"Allapalli": ["Adavi ramavaram","Allapalli","Ananthogu","Appaipeta","Damarathogu","Markodu","Pedda venkatapuram","Ramanujagudem","Vulavachalakam"],
+"Annapureddypalli": ["Abbugudem","Annadevam","Annapureddypally","Gumpena","Namavaram","Narsapuram","Peddareddygudem","Pentlam","Teljerla","Vootupalli"],
+"Aswapuram": ["Amerdha","Ammagaripalli","Aswapuram","Chinthiryala","Gondigudem","Kesavapuram","Kummarigudem","Mamillavai","Nellipaka","Pamulapalli","Tummalacheruv"],
+"Aswaraopeta": ["Achuthapuram","Anantharam","Asupaka","Aswaraopeta","Bachuvarigudem","Duradapadu","Gummadivalli","Guntimadugu","Jammigudem","Kannaigudem","Kavadigundla","Khammampadu","Lankaalapalli (d)","Maddikonda","Nandipadu","Naramvarigudem","Narayanapuram","N-f","Ramannagudem","Tirumalakunta","Vedanthapuram"],
+"Burgampahad": ["Bhadrachalam (ct)","Burgampadu","Iravendi","Krishna sagar","Morampalli banjar","Mothe (pattimalluru)","Nagineniprolu","Nakiriapeta","Pinapaka (pm)","Sarapaka (ct)","Seethampeta","Sompalle","Tekula","Uppusaka"],
+"Chandrugonda": ["Chandrugonda","Damarlacherla","Ganugapadu","Gurramgudem","Maddukuru","Pokalagudem","Ravikampadu","Sethaigudem","Tippanapally","Tungaram"],
+"Cherla": ["Bathinapalli","Bhumullanka(z)","Bodanalli (g)","Bodanalli (z)","Boinapalle","C. kathigudem","Chalamala","Cheemalapadu","Cherla (z)","Cherla(g)","China midisileru (g)","China midisileru (z)","Chintaguppa","Chintakunta (z)","Dandupeta (g)","Dandupeta (z)","Devarapalli","Dosillapalli","Gannavaram (z)","Gogubaka (z)","Gommugudem (z)","Gommupuliboinapalli (z)","Gompalli (z)","Jangalapalli (g)","Jettigudem","Kaliveru (z)","Kantepalli (g)","Keshavapuram (g)","Kothagudem (z)","Kothapalli (g)","Kothapalli(z)","Kothuru","Koyyuru (z)","Kudunuru (g)","Kudunuru (z)","Kurnapalli (g)","Lingala (g)","Lingala (z)","Lingapuram(z)","M.puliboinapalli (z)","Mamidigudem (z)","Mamidigudem(g)","Mogallapalli (z)","Mummidivaram- (z)","Peddamidisileru (z)","Peddamidisileru chalk -i","Peddamidisileru chalk -ii","Peddamidisileru chalk -iii","Peddipalli","Puligundala","Pusuguppa (g)","Pusuguppa (patch-i)","Pusuguppa (patch-ii)","R. kothagudem (g)","Rallagudem","Ramanujapuram (g)","Regunta (g)","Regunta (z)","Ricepeta (g)","Sarangapani (g)","Sarangapani (z)","Singasamudram","Srinivasapuram (z)","Subbampeta (g)","Subbampeta (z)","Subbampeta pach","Tegada (g)","Tegada (z)","Tippapuram","Unjupalli (g)","Upparigudem(g)","Uyyalamadugu (g)","Uyyalamadugu (z)","Vaddipeta (z)"],
+"Chunchupalli": ["Chunchupalle (ct)","Garimellapadu (ct)","Kothagudem","Penuballi","Penugadapa"],
+"Dammapeta": ["Akinepalli","Amudalalpadu","Ankampalem","Balarajugudem","Dammapeta","Ganeshpadu","Gunnepalli","Jaggaram","Katkoor","Lachapuram","Malkaram","Mallaram","Mandalapalli","Moddulagudem","Mustibanda","Nacharam","Nagupalli","Naidupeta","N-f","Patwarigudem","Peddagollagudem","Sayannaraopalem","Vadlagudem"],
+"Dummugudem": ["Achyuthapuram","Adavi ramavaram","Anjubaka","Arlagudem","Bandarugudem","Bheemavaram","Bojjiguppa","Burra vemula","Byragulapadu","Cherupalli","Chinna kamalapuram","Chinna nallaballi","Chinnabandirevu","Chintaguppa","Dabbanuthula","Danthenam","Dharmapuram","Dummugudem","Gangavaram","Gangolu","Govindapuram","Gowraram","Gurralabailu","Jinnagattu","Jinnelagudem","K. dummugudem","K. veerabhadrapuram","K.jinnelagudem","K.reguballi","Kannapuram","Kasinagaram","Katayagudem","Keshavapatnam","Kommanapalli","Kothagudem_1","Kothagudem_2","Kothapalli","Kothuru","Kotipallipadu","Koya narsapuram","Lachigudem","Laxmi narasimharao peta","Laxminagaram","Laxmipuram","Lingapuram","Mahadevapuram","Manguvai","Maraigudem","Mulakanapalli","N.laxmipuram","Nadikudi","Narayanapuram","Narayanarao peta","Narsapuram","N-f_1","N-f_2","N-f_3","N-f_4","N-f_5","Paidakulamadugu","Paidigudem","Parnasala","Patha maredubaka","Pedabandirevu","Pedanallaballi","Pedda kamalapuram","Powlaru peta","Pragallapalli","Rajupeta","Ramachandrapuram","Ramachandruni peta","Ramarao peta","Sangam","Seethanagaram","Seetharampuram","Singavaram","Subbaraopeta","Sugnanapuram","Suravaram","Tailorpeta","Turubaka","Venkata ramapuram","W. reguballi","White nagaram","Yerraboru","Z. reguballi","Z. veerabhadrapuram","Z.maredubaka"],
+"Gundala": ["Chinna venkatapuram","Galaba"],
+"Gundala_y": ["Gundala"],
+"Gundala": ["Kachanapally","Konavarigudem","Lingagudem","Mamakannu","Muthapuram","Padigapuram","Rudrapaka","Sayanapalli","Settypally"],
+"Julurpadu": ["Gundepudi","Julurupad","Kakarla","Karivarigudem","Machinenipeta","Nallabandabodu","Padamatinarsapuraam","Papakollu"],
+"Karakagudem": ["Anantharam","Bhattupalli","Chirumalla","Kalvalanagaram","Karakagudem","Mothe (pm)","N-f","Regalla","Samath mothe","Samathbhattupalli"],
+"Laxmidevipalli": ["Bangaru chelaka","Chatakonda","Gattumalla","Gollagudem","Karukonda","Kunaram","Laxmidevipally","Punukuduchelaka","Regalla"],
+"Manuguru": ["Mallaram","Manugur","N-f","Peddipalli","Ramanujavaram","Samathsingaram","Tirumalapuram"],
+"Mulkalapally": ["Annaram","Chaparalapally","Gopalaraopeta (d)","Jaganadhapuram","Kamalapuram","Kapugangaram","Kistaram (d)","Madharam","Mukamamidi","Mulakalapally","Pogallapally","Pusugudem","Rachannagudem","Timmampeta"],
+"Palvoncha": ["Chandralagudem","Dantelaboru","Gangadeviguppa","Karegattu","Koyagutta","Laxmidevipally","Nagaram","Narayanarao peta","Palwancha","Pandurangapuram","Payakari yanambilu","Rangapuram","Repallevada","Sangam","Sarekallu","Somulagudem","Suraram","Thoggudem","Ulvanoor","Yanambailu"],
+"Pinapaka": ["Allampalli","Bheemavaram","Bommarajupalli","Chegarsala","Duginepalli","E.bayyaram","Elchireddypalli","Gaddampalli","Janampeta","Pinapaka","Potlapalli","Sarjathpalli","Seetharampuram","Singireddypalli","Sunnamvarigudem","Uppaka","Veerapuram","Venkatraopeta"],
+"Sujathanagar": ["Gareebpeta","Raghavapuram","Sarvaram","Seethampeta","Singabhupalem","Sujathanagar"],
+"Tekulapalli": ["Bethampudi","Bodu","Gangaram","Gollapally","Koppurai","Pegallapadu"],
+"Yellandu": ["Chella samudram","Komararam","Mamidigundala","Ragaboinagudem","Romped (og) (part)","Rompedu","Sudimalla","Sudimalla (og) (part)","Yellandu"],
+"Bhupalpally": ["Azamnagar","Bheemghanpur","Bhupalpalle (ct)","Budharam","Chiknepalle","Deekshakunta","Gorlavedu","Gudadupalle","Jangedu","Kamalapur","Kompalle","Kothapalle","Nagaram","Nandigama","Neredpalle","Pambapur","Peddapur","Rampur","Vajinepalle"],
+"Chityal": ["Chain paka","Challagarige","Chityal","Doothpalle","Giddemutharam","Gopalpur","Jadalapet","Jookal","Kailapur","Kalvapalle","Muchiniparthi","Nain paka","Navabpet","Thirmalapur","Vencherami","Vodthala"],
+"Ghanpur (mulug)": ["Budharam","Burrakayalagudem","Chelpur","Dharmaraopet","Ghanpur","Karkapalle","Kondapur","Mylaram","Thupuram"],
+"Kataram": ["Adivarampet","Bayyaram","Bopparam","Chidnepalle","Chinthakani","Damerakunta","Devarampalle","Dhanwada","Dharmasagar","Garepalle","Gudoor","Gummallapalle","Gundrathpalle","Jadaraopet","Kambalpad","Kataram","Kothapalle","Mallaram","Medipalle","Morepalle","Nallagunta","Nasthur palle","Odipilavancha","Pochampalle","Pothulvai","Prathapagiri","Raghupalle","Regulagudem","Sunderajpet","Veerapoor","Vilasagar"],
+"Mahadevpur": ["Ambatpalle","Annaram","Balijapur","Beersagar","Beglur","Bheemanpalle_2","Bommapur","Chindrapalle","Edapalle","Elkeswaram","Kaleswaram","Kancherlapalle","Kannepalle","Kishtapur_1","Kothapet","Kudurpalle","Kuntlam","Laxmipur","Mahadevpur","Majeedpalle","Medigadda","Metpalle","Muddulapalle","Muktipalle","Nagepalle","Palgula","Peddampet","Puskupalle","Rapallekota","Suraram","Tallagadda","Yenkepalle"],
+"Malharrao": ["Ankanpalle","Ansanpalle","Chigurupalle","Chinna thoondla","Domala madaram","Dubbagattu","Dubbapeta","Gandharla","Kapuram","Kondampet","Korlakunta","Mallampalle","Mallaram","Mothkupalle","Nacharam","Pedda thoondla","Rudraram","Shatrajpalle","Tadicherla","Tadwai","Vallamkunta","Yedlapalle"],
+"Mogullapally": ["Akinepalle","Ankushapur","Gudipahad","Gundlakarthi","Issipet","Kurkishala","Medaramatla","Metpalle","Mogullapalle","Motlapalle","Mulkalapalle","Parlapalle","Peddakomatipalle","Pidisilla","Pothugal","Rangapuram","Vemulapalle"],
+"Mutharam mahadevpur": ["Borlagudem","Dudekulapalle","Gaddalapalle","Gandikamaram","Jeelapalle","Kankunoor","Korlakunta","Madharam","Mulugupalle","Mutharam (mahadevpur)","Nallagunta (meenajipeta)","Nimmagudem","Pandipampula","Pegdapalle","Polaram","Reddipalle","Regula gudem","Singampalle","Singaram","Stambhampalle (p.k.)","Stambhampalle (pp)","Vajnepalle","Yamanpalle","Yetnaram"],
+"Palimela": ["Bheemanpalle","Boipalmela","Burgugudem","Dammur","Garkepalle","Kamanpalle","Kishtapur","Lenkalagadda","Medigadda","Moded","Muknur","Neelampalle","Palimela","Pankena","Sarvaipet","Timmatigudem","Venchepalle"],
+"Regonda": ["Abbapuram","Bhagirthipet","Chennapur","Chinnakodepaka","Dammannapet","Jaggaiahpet","Jamshedbaigpet","Kanaparthy","Kodavatancha","Konaraopet","Kothapallegori","Lingala","Madathapalle","Ponagandla","Ramannaguda","Regonda","Repaka","Sultanpur","Tirumalagiri"],
+"Tekumatla": ["Ankushapur","Borna palli","Dubyala","Emped","Garimillapalle","Gummadavelli","Kalikota","Kundanpalle","Pangidipalle","Raghavapur","Raghavareddypet","Ramakistapur (t)","Ramakistapur (v)","Somanpalle","Tekumatta","Velchal","Vellampalle","Venkatraopalle"],
+"Achampet": ["Achampet (ct)","Ainole","Akkavaram","Bolghatpalle","Bommenapalle","Brahmanapalle","Chandapur","Chennaram (sabak)","Choutapalle","Ghanapur","Gumpampalle","Hajipur","Lakshmapur (p.n)","Lingotam","Mannavaripalle","Nadimpalle","Palukapalle","Puljala","Rangapur","Siddapur","Singavaram","Tangapur (ct)"],
+"Amrabad": ["Amrabad","Gudur","Lakshmapur (b.k)","Macharam","Mannanur","N-f","Thirumalapur (b.k)","Turkapalle","Uppununthala (b.k)","Vatwarlapalle (ct)"],
+"Balmoor": ["Ambagiri","Ananthavaram","Balmoor","Billakal","Bonala","Chennaram (p.g)","Gattuthumman","Godal","Jillellapalle","Jinkunta","Kondanagula","Kondareddipalle","Mahadevpur","Mylaram","Narasaipalle","Polepalle","Polesettipalle","Ramagiri","Ramajipalle","Thummanpeta","Veeramrajupalle"],
+"Bijinapally": ["Allipur","Anekhanpalle","Bijinapalle","Boyapur","Dharmapur","Gangaram","Gouraram","Gudlanarva","Karukonda","Khanapur","Latpalle","Lingasanipalle","Mahadevpeta","Mammaipalle","Manganur","Palem","Polepalle","Salkarpet","Shainpalle","Vaddemanu","Vasanthapur","Vattem","Velgonda","Venkatapur"],
+"Charakonda": ["Charakonda","Gokaram","Jupalle","Kamalapur","Seriappareddipalle","Sirsangandla","Thimmaipalle"],
+"Kalwakurthy": ["Bekkara","Gundur","Jeedipalle","Jillella","Kalwakurthy (ct)","Kurmidda","Lingasanipalle","Marchal","Mukural","Panjugul","Raghupathipeta","Suddakal","Tandra","Tharnikal","Thotapalle","Velkatta","Venkatapoor (patti maligara)","Vepur","Yellikal"],
+"Kodair": ["Badigadinne","Bawaipalle","Janumpalle","Khanapur","Kodair","Kondraopallle","Machupalle","Mailaram","Muthireddipalle","Nagulapalle","Narsaipalle","Paspula","Rajapuram","Rekulapalle","Singaipalle","Teegalapalle","Turkadinne","Yetham"],
+"Kollapur": ["Amaragiri","Ankiraopalle","Asadpur","Bollaram","Choutabetla","Chukkaipalle","Enmanabetla","Jawaipalle","Kollapur","Kudikilla","Machinenipalle","Malabaswapur","Malachintapalle","Narlapuram","Narsimhapuram","Narsingaraopalle","N-f","Ramapur","Singavatnam","Somasila","Wardyal","Yellur"],
+"Lingal": ["Anbatpalle","Ausalikunta","Bakaram","Chandapuram","Datharam","Jeelugupalle","Komatikunta","Kothakuntapalle","Lingal","Madapur","Manajipet","Maqdumpur","N-f_1","N-f_10","N-f_11","N-f_12","N-f_13","N-f_14","N-f_2","N-f_3","N-f_4","N-f_5","N-f_6","N-f_7","N-f_8","N-f_9","Rampur","Rangayapalle","Rayavaram","Sainpeta","Surapur","Vallabhapur"],
+"Nagarkurnool": ["Auraspalle","Bheemaram","Bondalapalle","Chandayapalle","Chandubatla","Deshitkyal","Gaggalpalle","Ganyagula","Gudipalle","Laxmapuram","Malkapur","Manthati","Naganul","Nagarkurnool (ct)","Nallavelli","Narsaipalle","Peddamudnur","Peddapuram","Puljal","Sripuram","Thoodukurthy","Uyyalawada","Vanapatla","Venkatapur","Yendabetla"],
+"Padara": ["Gangupenta","Ippalapalle","Maddimadugu","Maredugu","N-f_1","N-f_10","N-f_11","N-f_12","N-f_13","N-f_14","N-f_15","N-f_16","N-f_17","N-f_18","N-f_19","N-f_2","N-f_20","N-f_21","N-f_22","N-f_23","N-f_24","N-f_25","N-f_26","N-f_27","N-f_3","N-f_4","N-f_5","N-f_6","N-f_7","N-f_8","N-f_9","Padra","Udimilla","Vankeshwaram"],
+"Peddakothapally": ["Adirala","Bacharam","Bhavanampalle","Chandrakal","Chennapuraopalle","Chinnakarpamula","Dedinenipalle","Devalthirumalpur","Gantraopalle","Gorremadugu","Jonnalaboguda","Kalwakole","Kothapeta","Mahasamudram","Maredumandinne","Marrikal","Mustipalle","Narayanpalle","Peddakarpamula","Peddakothapalle","Pochapur","Sathapur","Thirumalampalle","Vedukaraopalle","Vennacherla","Yapatla"],
+"Pentlavelli": ["Chennampalle","Chintalapalle","Gopalapuram","Jataprole","Konduru","Malleswaram","Manchalakatta","Pentlavelli","Singavaram","Vemkal"],
+"Tadoor": ["Aithole","Akunellikuduru","Allapur","Antharam","Bhallanpalle","Cherlaitikyala","Govindayapalle","Gunthakoduru","Indrakal","Kummera","Medipur","Nagadevupalle","Papagal","Parvathayapalle","Polmur","Sirsawada","Tadoor","Thirumalapur","Thummalasugur","Yadireddipalle","Yatdharpalle","Yatmatapur","Yengampalle"],
+"Telkapally": ["Alair","Ananthasagar","Bandapalle","Boppepalle","Chinnamudnur","Gaddampalle","Gattunellikuduru","Gouraram","Gouthampalle","Karvanga","Lakhnaram","Nadigadda","Parvathapuram","Peddapalle","Pedduru","Raipakula","Rakonda","Telkapalle","Vattipalle","Zamistapur"],
+"Thimmajipet": ["Allampalle","Appajipalle","Avancha","Bajipuram","Bhavajipalle","Budhasamudram","Chegunta","Gorita","Gummakonda","Ippalapalle","Koduparthy","Marepalle","Marikal","Nerellapalle","Pothireddipalle","Pullagiri","Thimmajipet","Thirumalagiri","Vedirepalle"],
+"Uppununthala": ["Ayyavaripalle","Dasarlapalle","Kamsanipalle","Koratikal","Lathifpur","Laxmapur (pattigodal)","Mamillapalle","Marripalle","Molgara","Peddapur","Penmilla","Peratwanipalle","Raichedu","Rajanagar","Tadoor","Thippapur","Thirumalapur (pattigodal)","Upparapalle","Uppununthala","Veltur","Vighneswarpur","Zapthisadgode"],
+"Urkonda": ["Bommarasipalle","Gudiganpalle","Ippaipahad","Jagboinpalle","Jakanalapalle","Madharam","Narsampalle","Rachalapalle","Ramreddipalle","Revally","Urkonda","Urkondapeta"],
+"Vangoor": ["Annaram","Dindichinthalapalle","Gajra","Jogala","Kondareddipalle","Konetipur","Mittasagude","Nizamabad","Polkampalle","Pothareddipalle","Rangapur","Sarvareddipalle","Thippareddipalle","Thirumalgiri","Ulpara","Ummapur","Uppalapahad","Vangoor","Venkatapur (patti godal)"],
+"Veldanda": ["Ajilapur","Bhairpur","Bollampalle","Chedurvalli","Cherkur","Gundal","Karrevanipalle","Koneduvada","Kotra","Kuppagandla","Lingareddipalle","Peddapur","Pothepalle","Rachur","Veldanda","Yerravalli"],
+"Adda guduru": ["Addagudoor","Chinapadishala","Chirragoodur","Choula ramaram","Dacharam","Dharmaram","Janakipuram","Kanchanapally","Kotamarthy","Repaka (p) dacharam","Singaram (p) veldevi","Veldevi"],
+"Alair": ["Alair","Bahadoorpeta","Golanakonda","Kolanupaka","Kolluru","Manthapur","Patelguda","Sharajpet","Srinivasa puram","Tangutoor"],
+"Atmakur (m)": ["Atmakur","Dharmapur","Kalwapalle","Kaprai pally","Koratikal","Kurella","Lingarajpally","Murpirala","Palle pahad","Pallerla","Parupalli","Raghavapuram","Raheemkan peta","Raipally","Sarveypally","Singaram (patti) chandepally","Thukkapur"],
+"B pochampally": ["Abdulla nagar","Alinagar","Bheeman palle","Danthur","Deshmukhi","Dharma reddi palle","Gouse konda","Hyderpur","Indriyala","Jagath palle","Jalal pur","Jiblak palle","Julur","Kanumukla","Khaprai palle","Mehar nagar","Mukthapur","Pedda ravula palle","Pillai palle","Pochampalle (ct)","Ramalingam palle","Revan palle","Vanka mamidi"],
+"Bhongir": ["Anajipuram","Anantharam (p)","Banda somaram","Baswapur","Bhongir_1","Bolle palle","Bommaipally","Chandupatla","Cheemala kondur","Gouse nagar","Hanmapuram","Kesaram","Kunoor","Mustyalapalle","Nagireddi palle","Nandanam","Pagidi palle","Penchikala pahad","Ramachandrapur","Rayagiri (r)","Sure palle","Tajpuram","Timmapur","Tukkapuram","Veera vally","Wadaparthy","Yerram balle"],
+"Bibinagar": ["Anantharam","Annampatla","Bagdayara","Bibinagar (ct)","Brahmana palle","Chinaravala palle","Gudur","Gurrala dandi","Jain palle","Jam palle","Jameelapet","Jiya palle","Kondamadugu","Madharam","Mahadevpur","Maqdoom palle","Nemarugomula","Padamati somaram","Raavi pahad","Raghavapur","Raheem khan guda","Rangapur","Rayarao pet","Rudra velly","Venkiryal"],
+"Bommalaramaram": ["Bandakadipally","Boinapalle","Bommalaramaram","Cheekati mamidi","Hajipuram","Jalalpur","Mailaram","Maisi reddy palle","Maliyala","Mariyala","Medipally","Muneerabad","Naginenipally","Pedda parvathapuram","Pyararam","Ramlingam palle","Ranga puram","Solipet","Somaji palle","Thumkunta","Timmapuru","Tirmalagiri","Yaavapuram"],
+"Choutuppal": ["Allapuram","Chinna kondur","Choutuppal (ct)","Devalamma nagaram","Jai kesaram","Khairathpur","Lakkaram","Lingojigudem","Malkapur","Nelapatla","Panthangi","Peepal pahad","Swamulavari lingotam","Tallasingaram","Thangad pally","Tupranpet","Yellagiri"],
+"Gundala": ["Ambala","Anantaram","Bandakotha palle","Brahman palle","Gangapur","Gundala","Marpadaga","Masan palle","Pedda padishala","Ramaram","Seetarampur","Suddala","Turkala shapur","Vangala","Vastha kondur","Velmajala"],
+"Motakonduru": ["Ammanabolu","Chada","Chamapuru","Chandepally","Dilavarpuram","Dursaganipally","Ikkurthy","Komme palle","Matoor","Mota kondur","Teryala","Varuturu"],
+"Mothkur": ["Anajipur","Bijilapur","Dattappaguda","Konda gadapa","Moosipatla","Mothkur","Paladugu","Panaka banda","Patimatla","Podichedu","Sadarshapur"],
+"Narayanpur": ["Chillapuram","Chimiriyala","Guddimalkapuram","Gujja","Janagama","Kankanalguda","Kothaguda","Kothulapuram","Mohammadabad","Narayanapur","Puttapaka","Rachakonda","Sarvail","Voilpally"],
+"Rajapeta": ["Basanthapuram","Begumpet","Bondugula","Burugu palle","Challur","Doodi venkatapuram","Jala","Kalvapally","Kurraram","Lakshmakka palle","Narsapuram","Nemila","Pamukunta","Paru palle","Raghunadhapuram","Rajapet","Renikunta","Singaram","Somaram"],
+"Ramannapet": ["B.thurka palle","Bachuppala","Bogaram","Dubbaka","Iskilla","Janam palle","Kakkireni","Kunkudu pamula","Laxma pur","Munipampula","Neernemula","Nidhanapalle","Palliwada","Ramannapeta (ct)","Shobanadripuram","Siripuram","Suraram","Thummalaguda","Uthatoor","Yellanki","Yennaram"],
+"Thurkapally": ["China laxma puram","Dattai pally","Dharmaram","Gandamalla","Gopal puram","Ibrahimpuram","Komatikunta","Konapuram","Kondapur","Madha puram","Malka puram","Mannevari turkapalle","Mulakala pally","Nagai palle","Palle pahad","Rusta puram","Srinivasapuram","Tirmalapuram","Vasala marri","Veerareddi pally","Velpupally","Venkatapuram"],
+"Valigonda": ["Arruru","Chittapur","Duppally","Gangapur -p-arrur","Gokaram","Golne palle","Goparaj palle","Gurnadha palle","Kanchanpally","Kashamma kunta","Lothukunta","Malle palle","Mogilipaka","Muddapur","Munagala","Nagaram","Narsapur","Nemili kalva","Pahilwanpur","Poddutur","Pulgilla","Redla repaka","Sangam","Sunkishala","Tekula somaram","Valigonda","Velverthy","Vemulakonda","Venkatapur","Verkat palle"],
+"Yadagirigutta": ["Chinakandukur","Cholleru","Datharpally","Gowraipally","Jangampally","Kacharam","Mallapur","Masaipet","Pedakandukur","Ramojipet","Sadu velle","Saidapur","Vangapally","Yadagiripally"],
+"Boinpalli": ["Ananthapalle","Boinpalle","Burgupalle","Dundrapalle","Kodurupaka","Korem","Kothapeta","Malkapur","Mallapur","Manwada","Narsingapur","Shabashpalle","Sthambhampalle","Thadagonda","Vardavelli","Vilasagar"],
+"Chandurthi": ["Ananthapalli(pk)","Bandapalli","Chandurthi","Engal","Jogapur","Lingampet","Mallial","Marrigadda","Mudapalli","Sanugula","Thimmapur(pn)"],
+"Gambhiraopet": ["Dammannapet","Desaipet","Gajasingaram","Gambhiraopet","Gorantial","Khurdulingampalle","Kollamaddi","Kothapalle","Laxmipuram","Lingannapet","Mallareddipet","Mucherla","Mustafanagar","Narmala","Ramanujapuram","Samudralingapuram","Srigadha","Srinivasapuram"],
+"Illanthakunta": ["Ananthagiri","Anantharam","Dacharam","Galipalli","Illanthakunta","Jangareddipalli","Jawaharpet","Kandikatkoor","Muskanipet","Obulapuram (p.a)","Peddalingapur","Pottur","Rahimkhanpet","Ramajipet","Repaka","Sirikonda","Thallapalli","Thippapuram (p.a)","Vallampatla","Vanthadupula","Veljipuram"],
+"Konaraopet": ["Bavusaipeta","Dharmaram","Kanagarthi","Kolanur","Konaraopet","Kondapuram (pr)","Lachchapeta","Malkapet","Mamidipalle","Marrimadla","Marthanpet","Nagaram","Nimmapalle","Nizamabad","Palle (makta)","Ramannapet","Sivangalapalle","Suddala","Vattimalla","Venkatraopeta"],
+"Mustabad": ["Avunoor","Bandankal","Cheekod","Chippalapalle","Gudem","Gudur","Kondapur","Maddikunta","Moinkunta","Moraipalle","Morrapur","Mustabad","Namapur","Pothugal","Terlumaddi","Turkapalle"],
+"Rudrangi": ["Manala","Rudrangi"],
+"Sircilla": ["Bonala","Mushtipalle (og) (part)","Mushtipalli","Peddur","Sardapur","Sircilla_1","Sircilla_2","Sircilla_2_1"],
+"Thangallapalli": ["Baddenapalli","Baswapur","Cheerlavancha","Chintalthana","Gandilachapet","Jillella","Kasbekatkur","Mandepalli","Narsimhulapalli","Nerella","Obulapur(pk)","Ramchandrapur","Sarampalli","Thadur","Thangallapalle","Venugopalpur"],
+"Veernapalli": ["Adavipadira","Garjanpalle","Kancherla","Maddimalla","Vanpalli","Veernapalli"],
+"Vemulawada": ["Anupuram","Chandragiri","Kodumunja","Marupaka","Nampalli","Rudraram","Sankepalli","Satrajupalle","Thettakunta","Thippapuram","Vemulawada"],
+"Vemulawada rural": ["Bollaram","Chekkapalli","Edurugatla","Fazil nagar","Hanmajipet","Jayavaram","Lingampalli","Mallaram","Marripalli","Nookalamarri","Vattemla","Venkatampalle"],
+"Yellareddipet": ["Akkapalli","Almaspur","Bandalingampalli","Boppapur","Dumala","Gollapalli","Gundaram","Korutlapet","Narayanapur","Padira","Pothareddypalli","Rajannapet","Sarvaipalle","Singaram","Thimmapur","Venkatapur","Yellareddypet"],
+"Beerpur": ["Beerpur","Cherlapalli","Kammunur","Kandlapalli","Kolvai","Mangela","Narsimlapalli","Rangasagar","Rekulapalle","Thalladharmaram","Thungur"],
+"Buggaram": ["Beersani","Buggaram","Chinnapur","Gangapur","Gopulapuram","Maddunur","Shakalla","Sirikonda","Velgonda","Yashwantharaopet"],
+"Dharmapuri": ["Arepalli","Dharmapuri","Donthapur","Donur","Jaina","Kamalapur","Komanpalle","Maggidi","Mothinagar","Nagaram","Nerella","Rajaram","Rayapatnam","Sirivanchakota","Stambampalle","Theegala dharmaram","Thimmapur","Thummenala"],
+"Gollapalli": ["Abbapuram","Aggimalla","Athmakur","Battubuttamrajapalli","Bheemraj palli","Bonkur","Chandoli","Chilvakodur","Datnur","Gollapalli","Gunjapadugu","Ibrahim nagar","Israjpalli","Lothunur","Raghavapatnam","Rapalle","Thirmalapur","Thirmalapuram","Vengalapur","Venugumatla"],
+"Ibrahimpatnam": ["Ammakkapet","Bandalingapur","Bardipur","Dabba","Erdandi","Errapur","Fakir kondapur","Godur","Ibrahimpatnam","Kamala nagar","Komatikondapur","Maidpalle (w)","Mularampur","Rajeswara rao pet","Thimmapur","Varshakonda","Vemulakurthi","Yamapur"],
+"Jagitial": ["Dharur","Dharur (og) (part)","Jagitial","Jagtial","Kandlapalle (og)","Mothe","Mothe (r) (og) (part)","Tippannapet","Tippannapet (og) (part)"],
+"Jagitial rural": ["Anantharam","Anthargaon","Chelgal","Dharmaram","Gullapeta","Habsipur","Jabithapur","Jagtial","Kalleda","Kandlapalli","Kannapur","Lakshmipuram","Morapalli","Narsingapur","Polasa","Porandla","Somanpalli","Thakkallapalle","Thatipalli","Thimmapur","Veldurti"],
+"Kathlapur": ["Ambaripet","Bhushanrao peta","Bommena","Chinthakunta","Dulur","Dumpeta","Gambhirpur","Ippapalle","Kalikota","Kathlapur","Naga mallappakunta","Ootpalle","Peggerla","Posanipeta","Potharam","Sirkonda","Thakkallapalle","Thandriyal","Thurthi"],
+"Kodimial": ["Cheppial","Gourapur","Kodimial","Konapur","Kondapur","Nachupalle","Nallagonda","Namilikonda","Potharam","Pudur","Ramsagar","Sanivarampeta","Surampeta","Thippaipalle","Thiramalapur"],
+"Korutla": ["Ailapur","Chinnametpalle","Gumlapur","Joganpalli","Kallur","Korutla","Madhapur","Mohanrao pet","Nagulpet","Paidimadugu","Peddapur","Sangem","Venkatapur","Yekinpur","Yusufnagar"],
+"Mallapur": ["Adavimadhapur","Chittapur","Damarajapalli","Dharmaram","Gorrepalli","Gundampalli","Indira nagar","Laxmipur","Mallapur","Mogalpet","Muthyampet","Nadukuda","Obulapur","Raghavapeta","Ramdaspeta","Regunta","Sangem","Sataram","Sirpur","Sri rampur","Valgonda","Vempalli venkatraopet"],
+"Mallial": ["Balwanthapur","Gorregundam","Maddutla","Mallial","Manala","Muthyampeta","Myadampalle","Nookapalle","Obulapur","Potharam","Rajaram","Rampur","Sarvapur","Thakkallapalle","Thatipalle"],
+"Medipalli": ["Bheemaram","Dammannapeta","Govindaram","Kacharam","Kalvakota","Katlakunta","Kondapur","Lingampeta","Machapur","Mannnegudem","Medipalle","Pasnoor","Pormalla","Raghojipeta","Rangapur","Thombarao peta","Vallampalle","Venkataraopeta","Voddedu"],
+"Metpalli": ["Atmakur","Chowlamaddi","Jaggasagar","Kondrikarla","Masaipet","Metlachittapur","Metpalli","Ramalachakkapet","Ramchandrampet","Rangarao pet","Vellulla","Vempet","Venkatraopet","Vittampet"],
+"Pegadapalli": ["Aithupalli","Aravelli","Bathkepalli","Divikonda","Keesulatapalli","Laxmipur","Legalamarri","Lingapur","Namapur","Nancherla","Nandagiri","Narsimhunipeta","Pegadapalli","Vengalaipet","Yellapur"],
+"Raikal": ["Allipur","Alur","Bhoopathipur","Bornapalle","Chintalur","Devanpalle","Dharmajipet","Itkyal","Katkapur","Kistampet","Kummaripalle","Mahitapur","Mootapalle","Oddelingapur","Raikal","Ramajipet","Tatlavai","Uppumadige","Vasthapur","Veerapur"],
+"Sarangapur": ["Arpapalli","Battapalli","Ganeshpalli","Konapur","Lachakkapet","Laxmidevipalle","Nagunur","Pembetla","Potharam","Rangapet","Rechapalli","Sarangapur"],
+"Velgatur": ["Ambaripet","Chegyam","Endapalli","Godishelpet","Gullakota","Jagdevpet","Kapparaopet","Kishanraopet","Kondapur","Kothapet","Mukkatraopet","Muthunur","Padkal","Paidipalle","Pathagudur","Ramnur","Sakapuram","Sankenapalle","Shanabanda","Suraram","Velgatoor"],
+"Ameenpur": ["Ameenapur (ct)","Ilapur","Krishtareddipet","Patelguda","Sultanpur","Wadakpalle"],
+"Andole": ["Aksanpalle","Almaipet","Andole","Annasagar","Brahmanpalle","Chintakunta","Dakoor","Danampalle","Jogipet (ct)","Kansanpalle","Kichanapalle","Kodekal","Kondareddipalle","Mansanpalle_1","Mansanpalle_2","Nadlapur","Neerdigunta","Posanipet","Pothareddipalle","Ramsanpalle","Rollapahad","Saibanpet","Sangupet","Serimallareddipalle","Tadamanoor","Telelma","Yerraram"],
+"Gummadidala": ["Annaram (ct)","Antharam","Bonthapalle (ct)","Dacharam","Domadugu","Gummadidala","Kankunta","Lakshmapur","Mambapur","Nallavally","Pyaranagar"],
+"Hathnoora": ["Akwanchaguda","Borpatla","Chandapur","Cheekumaddur","Chintalcheru","Devalpalle","Doultabad","Govindarajupalle","Gundla machanur","Hathnoora","Kasal","Kodapak","Koniyal","Lingapur","Macherla","Madhura","Malkapur","Mangapur","Nagaram","Naguldevpalle","Nastipur","Palapnoor","Panyal","Reddikhanapur","Royyapalle","Sadullanagar","Seri sirpura","Shairkhanpalle","Sikandarpur","Sirpuram","Taherkhanpet","Turkal khanapur","Yellammaguda"],
+"Jharasangam": ["Ananthasagar","Bardipur","Bidekanna","Bopanpalle","Boregaon","Chilemamidi","Chilepalle","Chilkepalle","Devarampalle","Edakulapalle","Edulapalle","Gangapur","Giniyarpalle","Guntamarpalle","Islampur","Jeerlapalle","Jharasangam","Junegaon","Kakkerwada","Kamalpalle","Kappad","Kollur","Krishnapur","Kuppanagar","Machnoor","Medpalle","Narsapur","Potpalle","Pyarawaram","Rampur","Sangam [khurd]","Siddapur","Tummanpalle","Vanampalle","Yelgoi"],
+"Jinnaram": ["Amdoor","Bollaram (ct)","Chetlapotharam","Gaddipotharam","Jinnaram","Khazipalle","Kistaipalle","Kodakanchi","Madharam","Mangampet","Nalthur","Ootla","Palem","Puttaguda","Sivanagar","Solakpalle","Vailal"],
+"Kalher": ["Bachepalle","Bibipet","Fathepoor","Kalher","Khanapoor (b)","Khanapur (kadeem)","Krishnapoor","Mahadev palle","Mardi","Masan palle","Meerkhanpet","Mungepalle","Nagdhar","N-f_1","N-f_2","Ramreddi pet","Raparthy"],
+"Kandi": ["Arutla","Byathole","Cheriyal","Chidruppa","Eddumailaram (ct)","Erdanoor","Indrakaran","Julkal","Kalvemula","Kandi","Kasipur","Koulampet","Makthaalloor","Mamidipalle","Topgonda","Utharpalle"],
+"Kangti": ["Babulgaon","Bhanswada","Bheemra","Borgi aurad","Chapta [b]","Chapta [khurd]","Chowkanpalle","Damaragiddi [panchamahal]","Degulawadi","Enkemori","Gajulpahad","Ghanpur","Jamgiburg","Jamgikhurd","Kangti","Murkunjal","Naganpalle","Nagoor [b]","Nagoor [k]","Ramathirath","Rasole","Sidhangarga","Sukalteerth","Tadkal","Turkwadgaon","Valmoor","Yampalle"],
+"Kohir": ["Badampet","Bilalpur","Chinthalghat","Digwal","Godgar palle","Gurjuwada","Kavelli","Khanapur","Kohir","Kothur patti digwal","Kothur pattikohir","Machreddipalle","Madri","Maniyarpalle","Nagireddy palle","Paidigummal","Parsapalle","Picharagad","Pothireddypalle","Rajnelli","Sajjapur","Siddapur pattikohir","Venkatapur"],
+"Kondapur": ["Aliabad","Ananthasagar","Chimaldari konapur","Gadimalkapuram","Gangaram","Garakurthi","Girmapur","Gollapalle","Goplaram (kurd)","Gunthapalle","Haridaspur","Kondapur","Kutubshapet","Machepalle","Malkapur","Mallepalle","Mansanpally","Marepalle","Mohammadapur","Munidevunipalle","Saidapur","Terpole","Togurpalle"],
+"Manoor": ["Athimail","Badalgaon","Bellapur","Borancha","Danvar","Davvur","Dosapalle","Dudhagonda","Gatlingampalle","Islampur","Kamalapur","Magdumpur","Maikode","Manoor","Nadigadda hukrana","Pulkurthy","Raipalle","Ranapur","Shelgera","Thornal","Timmapur","Tumnoor","Usirkapalle","Yelgoi"],
+"Mogudampally": ["Asadgunj","Auranganagar","Dhanasiri","Godegarpalle (patti dhanasiri)","Gopanpalle","Gousabad","Gudpalle","Ippepalle","Khan jamalapur","Madgi","Malkapur [jadi]","Mannapur","Mogdampalle","N-f_1","N-f_2","Parvathapur","Raipalle [ p.d.]","Sarjaraopet"],
+"Munipally": ["Allapur","Antharam","Beloor","Bhusareddipalle","Bodishetpalle","Bodpalle","Budhera","Chilepalle","Chinna loni","Chinnachelmeda","Garlapalle","Gorreghat","Hydlapoor","Ibrahimpur","Kallapalle","Kankole","Khammampalle","Lingampalle","Makthakyasaram","Mallikarjunpalle","Mansanpalle","Melasangam","Moqdumpalle","Munipally","Pedda chelmeda","Pedda gopalaram","Pedda loni","Polkampalle","Ramachandrapuram","Rekulpahad","Tatipalle","Thakkadpalle"],
+"Nagalgidda": ["Audathpur","Enekpalle","Errakipalle","Gondagaon","Goudgaon (janwada)","Gudur","Karsgutti","Keswar","Kharamungi","Mavinelli","Morgi","Mukthapur","Nagalgidda","Pusalpahad","Shapur","Shari damargidda","Shikarkhana","Utpalle","Valloor","Yarriboguda","Yesgi"],
+"Narayankhed": ["Abenda","Allapur","Ananthasagar","Anthwar","Bhanapur","Chandapur","Chandkhanpalle","Chaptakhadeem","Gadthihokrana","Gangapur","Hangarga [b]","Hangarga [k]","Hanmanthraopet","Jagannathpur","Jukal","Juzalpur","Kamjipoor","Kondapur","Lingapur","Madhavar","Malharpoor","Mansoorpur","Nagapur","Namalimet","Narasapur","Narayankhed (ct)","Nizampet","Paidpalle","Panchagaon","Pipri","Rudrar","Ryakal","Ryalamadugu","Sanjivanrao pet","Sathagaon","Venkatapur"],
+"Nyalkal": ["Ameerabad","Atnur","Basanthpur","Chalki","Cheekurthi","Chingepalle","Dappur","Ganeshpur","Gangwar","Gunjetti","Hadnur","Humnapur","Hussainnagar","Husselli","Ibrahimpur","Kakijanwada","Kalbemal","Khaleelpur[m]","Malgi","Malkanpahad","Malkapur","Mamidgi","Mariampur","Metalkunta","Mirjapur[n]","Mirzapur[b]","Mungi","Murthujapur","Naimatabad","Nyalkal","Raghapur","Rajola","Ramtheerth","Ratnapur","Rejinthal","Rukmapur","Shamshallapur","Tatpalle","Tekur","Waddi"],
+"Patancheru": ["Bachuguda","Bhanur (ct)","Chinnakanjerla","Chitkul (ct)","Ghmc (m corp. + og) (part)","Indresham","Inole","Isnapur (ct)","Kardanur","Kyasaram","Lakdaram","Muthangi (ct)","Nandigaon","Pashamylaram","Patighanpur","Peddakanjerla","Pocharam","Rameshwar banda","Rendlagadda","Rudraram"],
+"Pulkal": ["Baswapur","Chakriyal","Choutkur","Esojipet","Gangulur","Gongojipet","Hunnapur","Kodur","Korpole","Lakshmisagar","Lingampalle","Manthoor","Minpur","Muddaipet","Mudimanikyam","Peddareddipet","Pocharam","Posanipalle","Pulkal","Raipahad","Sarafpalle","Seripeddareddipet","Seriramreddiguda","Singoor","Sivampet","Sultanpur","Sureddi itkyal","Taddanpalle","Vendikole","Venkatakistapur @ angadipet"],
+"Raikode": ["Allapur","Auranganagar (patti hasnabad)","Chimnapur","Dharmapur","Doultabad","Hasnabad","Hulgera","Indoor","Itkepalle","Jamalpur","Jamga (khurd)","Karchal","Khanjamalpur","Khudavanadpoor (dp)","Kodoor","Kushnoor","Madhapur","Mahbathpur","Mamidipalle","Matoor","Mohammadapur","Moratga","Mustafapur","Naganpalle","Nagwar","Nallampalle","Pampad","Peapalpalle","Raikode","Raipalle [patti karchal]","Sangapur","Shamshuddinpur","Shapur","Singitham","Sirur","Yenkepalle","Yousufpur"],
+"Ramchandrapuram": ["Bandlaguda (og)","Edulanagulapalle","Ghmc (m corp. + og) (part)","Kachireddipalle","Kollur","Manmole","Osman nagar","Ramachandrapuram(bhel) township (ct)","Tellapur (og)","Velmula"],
+"Sadasivpet": ["Ankenpally","Aroor","Atmakur","Babilgaon","Chandapur","Enkepalle","Etigaddasangam","Ishratabad","Kambalpalle","Kolkur","Konapur","Machireddipalle","Maddikunta (og) (part)","Maddikunta (part)","Malapahad","Melgirpet","Mubarakpur","Nagulpalle","Nandikandi (og)","Nizampur","Peddapur","Pottipalle","Rejinthal","Sadasivpet","Siddapur ( r) (og)","Suraram","Thangadpalle","Veltur","Venkatapur","Yawapur","Yellaram"],
+"Sangareddy": ["Chintalpalle (og) (part)","Chintalpalle (part)","Fasalwadi","Irigipalle","Ismailkhanpet","Kalabgoor","Kothlapur","Kulabgoor","Mohd.shapur","Nagapur","Pothreddipalle (ct)","Sangareddy","Tadlapalle"],
+"Sirgapoor": ["Anthergaon","Bokkasgaon","Chimal pahad","Gardegaon","Gosaipalle","Goudgaon [k]","Kadpal","Khajapur","Mubarakpoor","Pochapoor","Potpalle","Sangam","Sirgapoor","Sultanabad","Ujjalampahad","Wangdhal","Wasar"],
+"Vatpally": ["Bhootkur","Bijilipur","Buddaipalle","Devenoor","Dudiyal","Gorrekal","Gowtapoor","Keroor","Khaderabad","Marvelly","Medikunda","Nagulapalle","Nirjipala","Paladugu","Palvatla","Pothulaboguda","Shahednagar @ ghatpalle","Usrikpalle","Vatpally"],
+"Zahirabad": ["Algole","Allipur (ct)","Anegunta","Buchnelli (og) (part)","Buchnelli (part)","Burdipahad","Chiragpalle","Didgi","Hothi [b]","Hothi(k) (og)","Huggelli","Hyderabad (og)","Kasimpur","Kothur [b]","Malchelma","Pastapur (og)","Raipalle","Ranjole","Sathwar","Shekapur","Tamadpalle (og)","Tumkunta","Zaheerabad"],
+"Akkannapet": ["Akkannapeta","Anthakkapeta","Choutapalle","Dongala dharmaram","Gandipalle","Gouravelli","Jangaon","Katkur","Kesavapur","Mallampalle","Nandaram","Potharam (j)","Ramavaram","Regonda"],
+"Bejjanki": ["Bejjanki","Cheelapur","Dacharam","Devakkapalle","Gagillapur","Guggilla","Gundaram(p.s.)","Kallepalle","Muthannapet","Potharam","Regulapalle","Thotapalle","Vadlur-begumpet","Veerapur"],
+"Cherial": ["Akunoor","Cherial","Chityal","Chunchankota","Danampalle","Dommata","Kadavergu","Musthiyala","Nagapuri","Pedarajupet","Tadoor","Vechareni"],
+"Chinnakodur": ["Allipur","Ananthasagar","Chandlapur","Cherla ankireddipalle","Chinnakodur","Chowdaram","Gangapur","Gonepalle","Ibrahimpur","Kothurpalle","Machapur","Mallaram","Medipalle","Oblapur","Peddakodur","Ramancha","Ramuni patta","Sikandlapur","Sivampalle","Vittalpur"],
+"Doultabad": ["Chandampalle","Deepayampalle","Dommat","Doultabad","Godugupalle","Govindapur","Indupiriyal","Komaipalli","Konapur","Lingarajpalle","Machanpalle","Mohamadshapur","Mubarakpur","Narasampalle (patti dommat)","Seethrampalle","Seripalle bandaram","Surampalle","Tirmalapur","Upperpalle"],
+"Dubbak": ["Akaram","Appanpalle","Arepalle","Boppapur","Cheekode","Chervapur","Chillapur","Chittapur","Chowdarpalle","Dharmajipet","Dubbak","Dumpalpalle","Engurthi","Gambheerpur","Habshipur","Hasan mirapur","Lachapet","Mallaipalle","Pedda gundavelly","Potharam","Pothareddipet","Rajakkapet","Ramakkapet","Shivrampur","Thimmapur","Yellapur"],
+"Gajwel": ["Ahmadipur","Akkaram","Arepalle (sivar bejgaon)","Bangla venkatapur","Bayyaram","Bejgaon","Burugupalle","Dacharam","Datarpalle","Dharmareddipalle","Dilalpur","Gajwel (ct)","Havaiguda","Jaligaon","Kodakondla","Kolgur","Komatibanda","Kyasaram","Maqta masanpalle","Mutrajpalle","Pedched","Pragnapur","Rimmanguda","Sangapur","Seripalle","Singatam","Srigiripalle"],
+"Husnabad": ["Husnabad","Kuchanpalle","Madudha","Mirzapur","Mohammadapur","Nagaram","Pandilla","Potharam (s)","Potlapalle","Thotapalle (s)","Ummapur"],
+"Jagdevpur": ["Alirajapet","Ananthsagar","Baswapur","Chatlapalle","Chinna kistapur","Dharmaram","Doulapur","Gollapalle","Gopalpur","Itikyal","Jagdevpur","Kondapur","Munigadapa","Peerlapalle","Ramachandrapur","Rayavaram","Teegul","Teegul narsapur","Thimmapur","Venkatapur","Venkatapur (bg)","Wattipalle","Yellaiguda"],
+"Koheda": ["Baswapur","Gottalamitta","Gundareddipalle","Kachapur","Koheda","Kurella","Nakkira kommula","Narayanapur","Pariveda","Ramachandrapur","Samudrala","Sanigaram","Sriramulapalle","Thangallapalle","Varikolu","Vinjapalle"],
+"Komuravelli": ["Ainapur","Gouraipalle","Guravannapet","Kistampet","Komuravelle","Marrimusthiayala","Posanpalle","Ramsagar","Tapaspalle"],
+"Kondapak": ["Ankireddipalle","Bandaram","Duddada","Errapalle","Giraipalle","Konaipalle","Kondapak","Kuknurpalle","Lakudaram","Madinipur","Mangole","Marpadga","Mathapalle","Muddapur","Singaram","Sirsingandla","Thimmareddipalle","Thipparam","Velikattu","Viswanathapalle","Zapthi nacharam"],
+"Maddur": ["Arjunapatla","Bairanpalle","Bekkal","Dharmaram","Dhoolumitta","Gagillapoor","Jalapalle","Kamalayapalle","Kondapoor","Kootigal","Ladunoor","Lakkapalle","Lingapoor","Maddur","Marmamula","Narasaipalle","Rebarthi","Salakpoor","Thoranala","Vallampatla","Vangapalle"],
+"Markook": ["Angadi kistapur","Cheberthy","Damarakunta","Erravalle","Karkapatla","Markook","Sivar venkatapur","Vardarajpur","Pamulaparthi"],
+"Mirdoddi": ["Almaspur","Alwal","Andey","Bhoompalle","Chepial","Dharmaram","Jangapalle","Kasulabad","Khazipur","Kondapur","Kudavelle","Lingupalle","Mallupalle","Mirdoddi","Mothey","Rudraram","Veerareddipalle"],
+"Mulug": ["Achaipalle","Aliabad @ adivimasjid","Banda mailaram","Banda thimmapur","Baswapur","Bhilampur","Chilla sagar","Chinna thimmapur","Dasarlapalle","Gangadharpalle","Kokkonda","Kothial","Kothur","Lakshmakkapalle","Mandial","Mulug","Mustafa guda","Narsampalle","Narsapur","Singannaguda","Srirampur","Thanedharpalle","Tuniki bollaram","Zapthi singaipalle"],
+"Nangnoor": ["Akkanepalle","Ankushapur","Baddipadaga","Gatlamallial","Ghanpur","Khanapur","Khata","Konaipalle","Kondamrajpalle","Maqdumpur","Mundrai","Nagrajpalle","Nanganur","Narmetta","Palamakula","Rajagopalpet","Rampur","Thimmaipalle","Venkatapur"],
+"Narayanaraopet": ["Gurralagondi","Ibrahimpur","Jakkapur","Malyal","Narayanraopet"],
+"Raipole": ["Anajpur","Ankireddipalli","Appaipalle","Arepalle (sivar jaligaon)","Begumpet","Chinna masanpalle","Kothapalle","Lingareddipalle","Mantoor","Ramaram","Ramasagar","Rangampet","Rayapole","Waddepalle","Yelkal"],
+"Siddipet rural": ["Ankampet","Bussapur","Chintamadaka","Irkode","Machapur [patti dubbak]","Pullur","Raghavapur","Raorukal","Seetharampalle","Tornal","Venkatapur"],
+"Siddipet urban": ["Bakrichapial","Burugupalle","Ensanpalle","Gundavallikhurd","Imambad (og)","Mandapalle","Mittapalle","Nacharpalle","Narsapur (ct)","Ponnal","Siddipet","Siddipet (ct)","Tadkapalle","Velkatur"],
+"Thoguta": ["Bandarupalle","Chandapur","Eligaddakistapur","Ghanpur","Gudikandula","Kangal","Lingampet","Lingapur","P masanpalle","Pallepahad","Thoguta","Thukkapur","Vemulaghat","Venkatraopet","Yellareddipeta","Zaptilingareddipalle"],
+"Wargal": ["Amberpet","Ananthagiripalle","Chandapur","Girmapur","Gouraram","Govindapur","Jabbapur","Kondaipalle","Madharam","Majidpalle","Meenjipeta","Mentur","Mylaram","Nacharam","Ramachandrapur","Shakaram","Singaipalle","Sitarampalle","Tunki makta","Tunkikhalasa","Veluru","Wargal"],
+"Bachannapet": ["Alimpur","Bachannapet","Bandanagaram","Basireddipalle","Chinnaramancherla","Dubbaguntapalle","Gangapur","Itikyalapalle","Katkoor","Kesireddipalle","Kodavatoor","Konne","Lakshmapur","Lingampalle","Mansanpalle","Nagireddipalle","Narayanapur","Padamati keshavapur","Pochannapet","Pullaguda","Ramachandrapur","Salvapur","Tammadapalle"],
+"Chilpur": ["Chilpur","Chinnapendyala","Fathepur","Kondapur","Krishnajigudem","Lingampalli","Malkapur","Nashkal","Pallagutta","Rajavaram","Sreepathipalli","Venkatadripet"],
+"Devaruppula": ["Chinnamadur","Chowdur","Devaruppula","Dharamapur","Gollapalle","Kadavendi","Kolkonda","Madhapuram","Manpahad","Neermiala","Peddamadur","Ramrajpalle","Singarajpalle"],
+"Ghanpur (station)": ["Chagal","Ghanpur (station) (ct)","Ippagudem","Kothapalli","Meedigonda","Namilligonda","Pamunuru","Raghavapur","Samudrala","Shivunipalli","Thanadarpalli","Thatikonda","Vishwanathpur"],
+"Jangoan": ["Adavikeshvapur","Cheetakodur","Chowdaram","Chowdarpalle","Gangupahad","Goparajpalle","Jangaon","Marigadi","Oblakeshvapur","Pasarmadla","Peddapahad","Peddaramancherla","Pembarthy","Shamirpet","Siddenki","Venkriyala","Wadlakonda","Yellamla","Yerragollapahad","Yeswanthapur"],
+"Kodakandla": ["Edunuthala","Kodakandla","Lakshmakkapalle","Mondrai","Narsingapur","Pakala","Ramavaram","Rangapur"],
+"Lingalaghanpur": ["Cheeturu","Chinnarajpet","Gummadavelli","Jeedikal","Kallem","Kothapalle","Kundaram","Lingalaghanpur","Nagaram","Nellutla","Nyalapogula","Siripuram","Vanaparthy","Waddicherla"],
+"Narmetta": ["Ammapur","Bommakur","Gandiramaram","Hanmanthapur","Machupahad","Malakpet","Narmetta","Veldanda"],
+"Palakurthy": ["Ayyangaripalle","Bommera","Chennur","Dardepalle","Gudur","Iravennu","Kondapuram","Kothalabad","Lakshminarayana puram","Mailaram","Mallampalle","Manchuppula","Mutharam","Palakurthi","Regula","Shatapuram","Theegaram","Thirmalagiri","Thorrur","Valmidi","Vavilala","Visnoor"],
+"Ragunathpally": ["Ashwaraopalle","Bhanjipeta","Fatheshapur","Gabbeta","Govardhanagiri","Ibrahimpur","Kalvalapalle","Kanchanpalle","Kannaipalle","Koduru","Komalla","Kurchapalle","Madharam","Mekalagattu","Nidigonda","Quileshapur","Raghunathpalle","Srimannarayanapur","Veldi"],
+"Tharigoppula": ["Abdulnagaram","Akkerajepalle","Ankushapuram","Bonthagattunagaram","Narsapur","Potharam","Solipuram","Tharigoppula"],
+"Zaffergadh": ["Aliyabad","Konaichelam","Kunoor","Obulapur","Raghunathpalle","Sagaram","Shapalle","Suraram","Thamadapalle (i) ippagudem","Thammadapalle (g) guduru","Theegaram","Thidugu","Thimmampet","Thimmapur","Uppugal","Zaffergadh"],
+"Bellampally": ["Akenipalle","Ankusam","Batwanpalle","Bellampalli","Budha kalan (r)","Budha khurd (r)","Chakepalle","Chandravelli","Dugnepalle","Gurjal (r) @ talla gurjal","Kannal (r)","Perkapalle","Rangapet"],
+"Bheemaram": ["Ankushapur","Arepalle","Arkepalle","Bhimaram","Burugupalle","Dampur","Kothapalle","Maddikal","Polampalle","Pothanpalle","Reddipalle","Vellapalle"],
+"Bheemini": ["Akkalapalle","Bhimini","Bitturpalle","Chinna thimmapur","Chinnagudipet","Kamalapur","Karjibheempur","Keslapur","Laxmipur","Mallidi","Pedda thimmapur","Peddagudipet","Peddapeta","Pothepalle","Rajaram","Rampur","Ramraopeta","Thangallapalle","Veegaon","Venkatapur","Wadal"],
+"Chennur": ["Adiwarpet","Akkapalle","Amudalpalle","Angarajpalle","Asnad","Beervelli","Bhamraopet","Buddaram","Chakepalle","Chennur (ct)","Chintapalle","Dugnepalle","Gangaram","Guddirampur","Kachanpalle","Kannepalle","Kathersala","Khambojipet","Kistampet","Kommera","Konampet","Lingampalle","Nagapur","Narasakkapet","Narayanpur","Pokkur","Ponnaram","Raipet","Sankaram","Shivalingapur","Somanpalle","Suddal","Sundersala","Yellakkapet"],
+"Dandepally": ["Allipur","Andugulpet","Bikkanguda","Chintapalle","Dandepalle","Dharmaraopet","Dwaraka","Gudam","Gurrevu","Jaidapet","Kamepalle","Karvichelma","Kasipet","Kondapur","Kundelapahad","Laxmikantapur","Lingapur","Makulpet","Mamidipalle","Medaripet","Mutyampet","Nagasamudram","Nambal","Narsapur","Peddapet","Rebbenpalle","Rollpahad","Tallapet","Tanimadugu","Velganoor","Venkatapur"],
+"Hajipur": ["Chandanapur","Donabanda","Gadhpur","Gudipet","Hajipur","Hussainsagar","Karnamamidi","Kondapur","Kondepalle","Mulkalla","Nagaram","Namnur","Narsingapur","Padthenpalle","Peddampet","Pochammapad","Rapalle","Ryali","Subbapalle","Vempalle"],
+"Jaipur": ["Bejjal","Gangipalle","Gopalpur","Indaram","Jaipur","Kachanpalle","Kankur","Kistapur","Kundaram","Maddikunta","Maddulapalle","Mittapalle","Narasingapuram","Narva","Pegadapalle","Pownur","Ramaraopet","Rommipur","Shetpalle","Shivvaram","Tekumatla","Velal","Yelkanti"],
+"Jannaram": ["Badampalle","Bommena","Chintaguda","Dharmaram","Dongapalle","Indhanpalle","Jannaram","Juviguda","Kalmadagu","Kamanpalle","Kawal","Kishtapur","Kothapet","Malyal","Marriguda","Murimadugu","Narsingapur","Paidpalle","Papammaguda","Ponakal","Puttiguda","Raindlaguda","Rampur","Singaraipet","Thimmapur","Venkatapur"],
+"Kannepally": ["Ankannapeta","Babapur","Chintapudi","Dampur","Gollaghat","Jajjarvelly","Jankapur","Kannepalle","Kothapalle","Lingala","Lingapur","Madavelli","Metpalle","Motkupalle","Muthapur","Nagepalle","Polampalle","Rebbena","Saligaon","Shiknam","Surjapur","Tekulapalle","Veerapur","Yellaram"],
+"Kasipet": ["Chintaguda","Devapur (ct)","Dharmaraopet","Gatrapalle","Gurvapur","Kankalapur","Kasipet (ct)","Kometichenu","Kondapur","Konur","Kurreghad","Malkepalle","Muthempalle","Pallamguda","Peddampalle (r)","Peddapur","Rottepalle","Sonapur","Tirmalapur","Varipet","Venkatapur"],
+"Kotapally": ["Adkapalle","Algaon","Annaram","Arjungutta","Ayepalle","Bopparam","Borampalle","Brahmanpalle","Chintakunta","Dewalwada","Edagatta","Edula bandam","Jangaon","Kawarkothapalle","Kollur","Kondampet","Kotapalle","Lingannapet","Mallampet","Nagampet","Nakkalpalle","Pangadisomaram","Parpalle","Pinnaram","Pullagaon","Rajaram","Rampur","Rapanpalle","Rawalpalle","Sarvaipet","Shankarpur","Shetpalle","Sirsa","Supak","Venchapalle","Vesonvai","Yerraipet"],
+"Luxettipet": ["Balraopet","Challampet","Chandram","Dowdepalle","Ellaram","Gullakota","Itkyal","Jendavenkatapur","Kothur","Laxmipur","Lingapur","Luxettipet (ct)","Mittapally","Modela","N-f","Patha kommugudem","Pothepalle","Rangapet","Talamalla","Thimmapur","Utukur","Venkataraopet"],
+"Mancherial": ["Kothapalle","Mancherial","Naspur (ct)","N-f","Seetarampalle (og)","Singapur (ct)","Teegalpahad (ct)","Thallapalle (ct)"],
+"Mandamarri": ["Amerwadi","Andgulapet","Chirrakunta","Kyathampalle (ct)","Lemur","Mamidighat","Mandamarri","Ponnaram","Sarangapalle","Thimmapur","Venkatapur"],
+"Nennel": ["Avadam","Bhadrapur","Bhagirathipet","Bodhapur","Chinavenkatapur","Chittapur","Dammireddipet","Ghanpur","Gollapalle","Gudipet","Gundlasomaram","Jangalpet","Jhandavenkatapur","Jogapur","Khammampalle","Kharji","Konampet","Kothur","Kushenapalle","Mailaram","Mankapur","Manneguda","Metpalle","Nandulapalle","Nennal","Pottiyal","Puppulawanipet","Singapur","Sitanagar"],
+"Tandur": ["Abbapur","Achalapur","Ankepalle","Annaram","Balhanpur","Boyapalle","Chandrapalle","Choutpalle","Dwarakapur","Gampalpalle","Gopalnagar","Kasipet","Katherla","Kistampet","Kothapalle","Madaram","Madnapur","Narsapur","Pegadapalle","Rampur","Rechini","Repallewada","Tandur","Venkaipalle"],
+"Vemanpally": ["Baddampalle","Baddevelle","Bommena","Buyyaram","Chamanpalle","Dasnapur","Gorlapalle","Gudampet","Gudepalle","Jajulpet","Jakkepalle","Jilleda","Kallampalle","Kalmalpet","Katepalle","Kothapalle","Kyathanpalle","Maddulapalle","Mamda","Mukkidigudem","Mulkalpet","Nagaram","Neelwai","Oddugudem","Racherla","Rajaram","Sumputum","Suraram","Upparlapahad","Vemanpalle"],
+"Alampur": ["Alampur","Bairampalle","Bheemavaram","Bukkapur","Chagatur","Gundimalla","Imampur","Jillellapadu","Kasipur","Koneru","Kudavelli","Kyatur","Linganavai","Ryalampadu","Shalipur","Singavaram","Sultanpur","Uppalapadu","Utkur","Yapaladevipadu"],
+"Dharoor": ["Alwalpad","Chintharevula","Dharur","Dornala","Garlapadu","Kothulagidda","Mannapur","Marlabeedu","Mirzapuram","Nagardoddi","Neelahalli","Nettempadu","Palcherla","Puranapalem","Ryalampad","Upperu"],
+"Gadwal": ["Anantapur","Atmakur","Basapur","Beerole","Gadwal (r)(part)","Gadwal_1","Gadwal_2","Gonpad","Gurramgadda","Jammiched","Jilladabanda","Kakulavaram","Kothapalle","Mellacheruvu","Mulkalapalle","Paramala","Pudur","Rekulapalle","Sangala","Yenkampeta"],
+"Ghattu": ["Aloor","Apkondanhalli","Aragidda","Balgera","Boyalagudem","Chagadona","Chamankhandoddi","Ghattu","Gorlakhandoddi","Induvasi","Macherla","Mallampalle","Mittadoddi","Muslimpalle","Penchikapadu","Rayapuram","Thappetlamorsu","Thummalacheruvu","Yellamdoddi"],
+"Ieeja": ["B.timmapur","Bingidoddi","Chinna tandrapadu","Devabanda","Eklaspur","Ieej","Jadadoddi","Kesavapuram","Kudakanoor","Medikonda","Pullikal","Sindhanoor","Thoomkunta","Thothinonidoddi","Uppal","Uthanur","Venisampur","Venkatapur","Yapadinne"],
+"Itikyala": ["Batladinne","Bochuveerapur","Chagapur","Dharmavaram","Gopaldinne","Itikyal","Karpakula","Kondair","Mogilravalcheruvu","Munagala","Peddadinne","Putandoddi","Rajsrigarlapad","Sasnool","Saterla","Shabad","Thimmapur","Udandapur","Vallur","Vavilala","Vemula"],
+"Kaloor thimmandoddi": ["Chintalkunta","Eerlabanda","Erkiched","Ganganapally","Guvvaldinne","Isarlapad","Kaloor thimmandoddi","Kondapur","Kuchinerla","Musaldoddi","Nandinne","Pagunta","Ummityal","Venkatapur"],
+"Maldakal": ["Adaviravalcheruvu","Bijjawaram","Burdipad","Chelagarlapadu","D.amaravai","Kurthiravalcheruvu","Maddelabanda","Maldakal","Mallemdoddi","Nagardoddi","Nethivanipalle","Palwai","Saddalonipalle","Syasampalle","Thatikunta","Uligepalle","Vittalapuram","Yeddulagudem","Yelkur"],
+"Manopad": ["A.burdipad","Amaravai","Boravelle","Chandapur","Chandur","Chinnapothulapadu","Chinnipadu","Gokulapad","Jallapur","Kalkuntla","Khanapur","Korvipadu","Maddur","Mangampeta","Manopad","Narayanpur","Pallepadu","Peddaamudyala padu","Peddapothulapadu","Posalpadu","Raimakulakunta"],
+"Rajoli": ["Chinnadhanwada","Mandoddi","Mundladinne","Nasnur","Pacharla","Padamatigarlapadu","Pedda thandrapadu","Peddadhanwada","Rajoli","Thummilla","Thurpu garlapadu"],
+"Undavelly": ["Baswapur","Bhairapur","Bonkur","Chinnaamudyala padu","D.burdipadu","Itkyalpadu","Kalgotla","Kanchupadu","Maramunagala","Mennipadu","Pragatoor","Pullur","Seripalle","Thakkasila","Undavelli"],
+"Waddepally": ["Budamarsu","Jilledudinne","Julekal","Koildinne","Konkala","Paipad","Ramapuram","Tanagala","Waddepally"],
+"Asifabad": ["Ada","Ada - dasnapur","Addaghat","Ankusapur","Appepalle","Asifabad (ct)","Babapur","Balahanpur","Balegaon","Buruguda","Cherpalle","Chilatiguda","Chirrakunta","Dadpapur","Dagleshwar","Danaboinapeta","Danapur","Demmidiguda","Devadurgam","Edasgondi","Edulwada","Govindapur","Gudigudi","Gundi","Ippalnavegaon","Itukyal","Keslapur","Khapri","Kommuguda_1","Kommuguda_2","Kosara","Kowdianmovad","Kutoda","Malan gondi","Mankapur","Mekalwada","Mondepalle","Mothuguda","Mowad","Nandupa","Nimbada","Padibonda","Perasnambal","Pippalgaon","Rahapalle","Rajura","Routsankepalle","Saleguda","Samela","Sankepalle","Shakangondi","Singaraopet","Sirasgaon","Siryan mowad","Suddha ghat","Temrianmovad","Tumpalle","Wadigondi","Wadiguda","Wavudham","Yellaram"],
+"Bejjur": ["Ambhaghat","Bejjur","Bhatpalle","Chinnasiddapur","Gabbai","Katepalle","Kukuda","Kushnepalle","Marthadi","Mogavelly","Munjampalle","Nagepalle","Outsarangipalle","Papanpet","Peddasiddapur","Pothepalle","Rebbena","Rechini","Somini","Sushmeer","Talai","Tikkapalle"],
+"Chintalamanepally": ["Adepally","Babapur","Babasagar","Balaji ankoda","Bandepalle","Burepalle","Buruguda","Chintala manepalle","Chittam","Dabba","Dimda","Gangapur","Gudem","Karjavelli","Kethini","Korisini","Koyapalle","Ranvalli","Ravindranagar","Rudrapur","Shivapalle"],
+"Dahegoan": ["Ainam","Amargonda","Beebra","Bhamanagar","Bhogaram","Borlakunta","Brahmanchichal","Chandrapalle","Chinnaraspalle","Dahegaon","Digida","Dubbaguda","Etapalle","Girvelli","Gorregutta","Hathni","Itial","Kalwada","Kammarpalle","Kothmir","Kunchavelli","Laggaon","Loha","Motlaguda","Pambapur","Pesarkunta","Polampalle","Rampur","Ravalpalle","Teepergaon","Vodduguda"],
+"Jainoor": ["Addesar","Ashapalle","Bhusimatta","Daboli","Dubbaguda","Gudamamda","Jainoor (ct)","Jamgaom","Jamni","Jendaguda","Lendiguda","Marlawai","Patnapur","Polasa","Powerguda","Rasimatta","Shivanur","Ushegaon"],
+"Kagaznagar": ["Andavelli","Ankhoda","Ankusapur","Bareguda","Bhatpalle","Bodepalle","Boregaon","Boregaon_2","Chinthaguda","Dubbaguda","Easgaon","Gannaram","Gondi","Jagannathpur","Jambuga","Jankapur","Kadamba","Kagaz nagar","Kosni","Mahajanguda","Malni","Mandva","Marepalle","Metindhani","Metpalle","Mosam","Nagampet","Nandiguda","Narapur","Nazrulnagar","Raspalle","Regulguda","Sarsala","Seetanagar","Vallakonda","Vanjiri"],
+"Kerameri": ["Agarwada","Annarpalli","Anthapur","Arekepalle","Arepalle","Babejheri","Bheemangondi","Bolapater","Chalbadi","Chinthakara","Devapur","Devuepalli","Dhanora","Gowri","Goyagaon","Hatti","Indhapur","Isapur","Jhari","Jodeghat","Kallegaon","Karanjiwada","Keli buzurg","Keli khurd","Kerameri","Khairi","Kota","Kotari","Lakmapur","Mettapipri","Modi","Murkilonka","Nagapur","Narsapur","N-f_1","N-f_2","Nishani","Parandoli","Paraswada","Parda","Patnapur","Pipri","Sakada","Sangvi","Sankaraguda","Sawarkheda","Surdhapur","Token movad"],
+"Koutala": ["Bhalepalle","Chandaram","Chipurudubba","Gudlabori","Gundaipet","Gurudpet","Kanki","Kannepalle","Kouthala","Kumbari","Mogadagad","Muthampet","Nagepalle","Pardi","Sandgaon","Talodi","Tatipalle","Thumbadihatti","Veerdandi","Veervalli"],
+"Lingapur": ["Chorpalle","Ghumnur (buzurg)","Ghumnur (khurd)","Jamuldhara","Khanchanpalle","Kothapalle","Lingapur","Loddiguda","Mamidipalle","Vankamaddi","Yellapatar"],
+"Penchicalpet": ["Agarguda","Bombaiguda","Chedwai","Gannaram","Gundepalle","Guntlapet","Jilleda","Kammergaon","Kondapalle","Koyachichal","Lodpalle","Muraliguda","Nandigaon","Penchikalpet","Pothepalle","Tellapally (d)","Yelkapalle","Yellur"],
+"Rebbena": ["Dharmaram","Edvalli","Fakeerpalle","Gangapur","Gollet","Govindapur","Gudepalle","Jakkalpalle","Khairgaon","Kistapur","Komarvalli","Kondapalle","Mediguda","Nambal","Narayanpur","Navegaon","Nerpalle","Passigaon","Pothpalle","Pulikunta","Rajaram","Rampur","Rangapur","Rebbana","Rollapahad","Rollapet","Seethanagar","Sonapur","Takkallapalle","Tungeda","Venkulam"],
+"Sirpur (t)": ["Achalli","Arepalle","Bhupalapatnam","Bonki","Cheelapalle","Chintakunta","Chunchupalle","Dhorpalle","Garlapet","Heerapur","Hudkili","Jakkapur","Laxmipur","Loanvelly","Makidi","Navegaon","N-f","Parigaon","Rajaram","Rudraram","Sirpur","Tonkini","Vempalle","Venkatraopet"],
+"Sirpur u": ["Babjipet","Bhurnur","Chapri","Devadpalle","Dhanora","Kohinur (buzurg)","Kohinur (khurd)","Mahagaon","Netnur","Pamulawada","Pangdi","Phullara","Raghapur","Seetagondi","Shettihadapnur","Sirpur (u)"],
+"Tiryani": ["Areguda","Bheemapur","Boardham","Chintapalle","Chopidi","Dantanpalle","Devaiguda","Dondla","Dongargaon","Duggapur","Edulpad","Gadalpally","Gambhiraopet","Gangapur","Ginnedari","Goena","Goyagaon","Gundala","Irkapalle","Islampur","Jewni","Kannepalle","Korlanka","Koyatalandi","Lingiguda","Mandrumeda","Mangi","Manikyapur","Moindagudipet","Pangidimadra","Pedakunta","Rallakannepally","Rompally","Rudrapur","Sangapur","Sonapur","Talandi","Tiryani","Ullipitta dorli"],
+"Wankidi": ["Akini","Arli","Bambara","Bendara","Boarda","Boranjiguda","Chichpally","Chincholi","Choupanguda","Devudpally (ui)","Dhaba","Ghatjangaon","Goegaon","Gunjada","Indhani","Jaithpur","Jambuldhari","Kanneragaon","Khamana","Khedegaon","Khirdi","Komatiguda","Lanjanveera","Mahagaon","Narlapur","Navegaon","Neemgaon","Nukewada","Samela","Sarandi","Sarkepally","Sawathi","Sonapur","Tejapur","Velgi","Wankdi (kalan)","Wankdi (khurd)"],
+"Basar": ["Basar","Bidrelli","Dhondapur","Kirgul (buzurg)","Kirgul (khurd)","Kowtha","Labdi","Mahadpur","Mailapur","Ratnapur","Ravindrapur","Renukapur","Salapur","Sawargaon","Surli","Takli","Voni"],
+"Bhainsa": ["Babalgaon","Badgaon","Bhainsa","Bijjur","Boregaon (buzurg)","Chichond","Chintalabori","Dahegaon","Ekgaon","Elegaon","Gundagaon","Hampoli khurd","Hasgul","Kamol","Khatgaon","Kotalgaon","Kumbhi","Kumsari","Linga","Mahagaon","Manjri","Mategaon","Mirzapur","Pangri","Pendapalle","Pipri","Siddur","Sirala","Sunkli","Takli","Thimmapur","Walegaon","Wanalpahad","Watoli"],
+"Dasturabad": ["Bhuthkur","Bhuttapur","Chennur","Dasturabad","Gondserial","Mallapur","Munnial","Revojipet (new)"],
+"Dilawarpur": ["Arli (buzurg)","Banaspalle","Chintalkunta","Dilawarpur","Gundampalle","Kadili","Kalwa","Kanjar","Kothur","Lingampalle","Malegaon","Mallapur","Mayapur","Mujgi","New lolam (r.c.)","Potpalle (khurd)","Ratnapur (k)","Samunderpalli","Sangvi","Siddankunta","Sirgapur"],
+"Kaddam peddur": ["Allampally","Ambaripet","Bellal","Chittial","Dharmaipet","Dharmajipet","Dildarnagar","Gandigopalpur","Gangapur","Islampur","Kalleda","Kannapur","Kondkuru","Laxmipur","Laxmisagar","Lingapur","Maddipadga","Maisampet","Masaipet","Nachan yellapur","Narsapur","Nawabpet","Pandwapur","Peddur","Rampur","Revajipet (old)","Sarangapur","Udumpur","Yelagadapa"],
+"Khanapur": ["Advisarangapur","Badankurthy","Bavapur (k)","Beernandi","Bevapur (r)","Chamanpalle","Dilwarpur","Ervachintal","Gangaipet","Iqbalpur","Khanapur","Kothapet","Maskapur","Medampalle","Patha yellapur","Rajura","Sathnapalle","Singapur","Surjapur","Tarlapad","Thimmapur (ct)"],
+"Kubeer": ["Antharni","Bakot","Belgaon","Brahmeswar","Chata","Chondi","Darkubeer","Dodarna","Godapur","Godsera","Halda","Hampli (buzurg)","Jamgaon","Jumda","Khasra","Kubeer","Kupti","Lingi","Malegaon","Marlagonda","Mola","Nandapahad","Nighwa","Palsi","Pangra","Pardi (buzurg)","Pardi (khurd)","Rajura","Ranjani","Sangvi","Sanwali","Shivani","Sirpalle","Sonari","Sowna","Varni","Veeragohan","Wai"],
+"Kuntala": ["Ambagaon","Ambakanti","Andkur","Downelle","Kallur","Kuntala","Limba (buzurg)","Limba (khurd)","Medanpur","Ola","Penchikalpahad","Raipahad","Rajapur","Suryapur","Venkur","Vittapur"],
+"Laxmanchanda": ["Babapur","Boregaon","Chamanpalle","Chintalchanda","Dharmaram","Kanjar","Kankapur","Laxmanchanda","Machapur","Mallapur","Munipalle","Narsapur","Parpalle","Peechara","Potapalle (k)","Potpalle (b)","Thirpalle","Waddyal"],
+"Lokeswaram": ["Abdullapur","Bamni (k)","Bhagapur","Biloli","Brahmeswar","Dharmara","Gadchanda","Godesra","Hadgaon","Hawarga","Joharpur","Kankapur","Kistapur","Lohesra","Malkapur","Manmad","Mohalla","Nagar","New raipur (k) r.c","Panchgudi","Pipri","Potpalle (b)","Potpalle (m)","Puspur","Raipur (k)","Rajura","Sathgaon","Savargaon","Wastapur","Watoli","Yeddur"],
+"Mamada": ["Adarsanagar (r.c) kothur @ edudur","Ananthpet","Arepalle","Bandal khanapur","Burugupalle","Chandaram","Danthapalle","Devathapur","Dimmadurthy","Gayadpalle","Kamal kote","Kappanpalle","Kishanraopet","Koratikal","Kotha lingampalle (r.c)","Kotha sangvi (r.c)","Kotha timbareni (r.c)","Lachampur","Lingapur","Lonkapad","Mamda","Mondepalle","Naldurthi","Parimandal","Ponkal","Potharam","Pulimadugu","Raidhari","Rampur","Rasimatla","Tandra","Vasthapur","Venkatapur"],
+"Mudhole": ["Ashta","Boregaon","Brahmangaon","Chandapur","Chinchala","Chintakunta","Edbid","Ganora","Govindapur","Gudur","Jalalpur","Karegaon","Machkal","Mudgal","Mudhole","Pipri","Ramtek","Ruvvi","Shetpalle","Taroda","Venkatapur","Vitholi","Wadthala"],
+"Narsapur g": ["Anjani","Arli (khurd)","Bamini (buzurg)","Burgupalle (k)","Burugupalle (g)","Chackpalli","Cherlapalle","Daryapur","Dongargaon","Gulmadaga","Kusli","Muthakapalli","Nandan","Narsapur","Naseerabad","Rampur","Shakapur","Tekulpahad","Temborni","Turati","Velgudhari"],
+"Nirmal rural": ["Akkapur","Ananthpet","Bhagyanagar","Chityal","Dyangapur","Kamlapur","Kondapur","Koutla (k)","Langdapur","Mambapur","Manjulapur (r)","Medipalli","Muktapur","Naganaipet","Neelaipet","New mujigi","New pochampad","Nirmal","Ranapur","Ratnapur kandli","Talveda","Thamsa","Thimmapur","Vengwapet","Venkatapur (r)","Yedulapur","Yellapalle","Yellareddipet"],
+"Pembi": ["Burugpalle","Dhomdari","Gummanuyenglapur","Itikyal","Kosagutta","Mandapalle","Nagpur","Paspula","Pembi","Shetpalle","Vaspalle","Venkampochampad"],
+"Sarangapur": ["Adelli","Aloor","Bagirathipur","Beervelli","Boregaon","Chincholi (buzurg)","Chincholi (malak)","Dhani","Godsera","Gopalpet","Jam","Jewly","Kamkati","Karji","Kowtla (buzurg)","Kupti","Lakshmipur","Nagapur","Pendaldhari","Ponkur","Potia","Pyaramur","Sarangpur","Tandra","Vaikuntapur","Vanjar","Yakarpalle"],
+"Soan": ["Bopparam","Gamjal","Jafrapur","Kadthal","Kuchanpalle","Local velmel","Lolam","Madhapur","New bopparam","New velmal","Old pochampad","Pakpatla","Sangampet","Shakari","Siddulkunta (new)","Soan"],
+"Tanoor": ["Bamni","Beltaroda","Bember","Bhosi","Bolsa","Bondrat","Boregaon (khurd)","Dhagaon","Doultabad","Elvi","Hangirga","Hipnally","Jewla (buzurg)","Jewla (khurd)","Jhari (buzurg)","Jhari (khurd)","Kalyani","Kesarelly","Kharbala","Kolur","Kupli","Mahalingi","Masalga","Mugli","Nandgam","Singangam","Tanoor","Tondala","Umri (khurd)","Wadgaon","Wadhone","Wadjhari","Yellawat"],
+"Bantwaram": ["Bantwaram","Bopanwaram","Madhvapur","Mangraspalle","Nagaram","Noorullapur","Pommapur","Rompalle","Salbathapur","Somaram .m","Sultanpur","Turmamidi","Yacharam"],
+"Basheerabad": ["Allapur (basheerabad)","Bahadurpur","Damerched","Ekmai","Gangwar","Gotiga kalan","Gotiga khurd","Inderched","Ismailpur","Jalalpur","Jeevangi","Kamsanpalle buzurg","Kamsanpalle maqta","Khasimpur","Koppankote","Korviched","Kothlapur buzurg","Kyadgira","Mailwar","Malkangiri","Manthangoud","Manthatti","Manthlapur","Marpalle","Masanpalle (m)","Navalga","Navandgi (ct)","Neelapalle","Parwathpalle","Reddighanapur","Shapur maqta"],
+"Bomaraspeta": ["Amsanpalle","Bomraspet","Burhanpur","Chilmalmailwar","Chowdarpalle","Dudyal","Dupcherla","Erlapalle","Erupumalla","Gouraram","Kothur","Lagcherla","Lingampalle","Machanpalle","Madanpalle","Metlakunta","Nagireddipalle","Namdarpur","Nazkhanpalle","Regadmailwar","Salimdapur","Thirumalapur","Thunkumetla","Wadicherla","Yenkepalle"],
+"Dharur": ["Allapur","Allipur","Ampalle","Antharam","Bacharam","Burugadda","Chintakunta","Dharmapur","Dharur","Dornal","Ebbanoor","Gangaram","Ghattepalle","Gurudotla","Haridaspalle","Kacharam","Kerelly","Kondapur kalan","Kondapur khurd","Kukinda","Kummar palle","Mailaram","Mominkalan","Mominkhurd","Nagaram","Nagasamundar","Nagsanpalle","Narsapur","Ousapalle","Rajapur","Rampur","Rudraram","Somaram","Tharigopul"],
+"Doma": ["Ainapur","Ananthareddipalle","Bachpalle","Badampalle","Batla chandraram","Bompalle","Brahmanpalle","Budlapur","Dadapur","Dirsampalle","Doma","Dongayankepalle","Dornalpalle","Ganjipalle","Gudur","Gumdal","Khammam nacharam","Kishtapur","Kondaipalle","Linganpalle","Mallepalle","Mothkur","Ootpalle","Palepalle","Pothreddypalle","Rakonda","Sivareddipalle","Timmaipalle"],
+"Doulathabad": ["Allapur","Anthwar","Balampeta","Bichal","Challapur","Chandrakal","Devarfaslawad","Doulathabad","Erlapalle","Gokafasalwad","Gundepalle","Imdapur","Kowdeed","Kudrimalla","Kuppagiri","Matoor","Nagasar","Nandaram","Neetur","Polkampalle","Saleempur","Sultanpur","Suraipalle","Thimmareddipalle","Thirumalapur","Yamki"],
+"Kodangal": ["Angadi raichur","Annaram","Appaipalle","Chinna nandigam","Chitlapalle","Gandlepalle","Hasnabad","Indanoor","Kastoorpalle","Kodangal","Nagaram","Parsapur","Peddanandigam","Pyalamaddi","Ravalpalle","Rudraram","Tekalkode","Udimeswar","Upparpalle"],
+"Kotepally": ["Barwad","Beerol","Daryapur","Heerapur","Jinnaram","Kankanalapalle","Kareempur","Kothapalle","Kotpalle","Malshetpalle","Mannapur","Mothkupalle","Nagsanpalle","Rampur","Vagulapur","Yenkepalle","Yennaram"],
+"Kulkacharla": ["Adavivenkatapur","Allapur","Almaskhanpet","Ananthasagar","Antharam","Bandayelkacherla","Bomreddipalle","Chellapur","Chowdapur","Ghanapur","Ippaipalle","Kulkacharla","Kusumasamudram","Lingampalle","Mandipal","Mujahidpur","Peerampalle","Puttapahad","Salveed","Tirumalapur","Veerapur","Venkatapur","Vittalapur"],
+"Marpalle": ["Allapur","Bilkal","Buchanpalle","Damasthapur","Dargulpalle","Ghanpur","Gundlamarpalle","Jamshedapur","Kalkoda","Komshetpalle","Kothlapur","Kotmarpalle","Kudgunta","Mallikarjungiri","Marpalle kalan","Mogiligundla","Narsapur","Panchalingal","Patloor","Peddapur","Pilligundla","Ramapur","Ravalapalle","Shapur","Sirpura","Thimmapur","Thummalapalle","Veerlapalle"],
+"Mominpet": ["Amradi kalan","Amradi khurd","Burugupalle","Chakrampalle","Cheemaldari","Devarampalle","Durgamcheru","Govindapur","Izrachettempalle","Kaslabad","Kesaram","Kolkonda","Mekavanampalle","Mominpet","Morangpalle","Rallagudpalle","Ramnathgudpalle","Ravalapalle","Syedalipur","Tekulapalle","Velchal","Yenkathala","Yenkepalle"],
+"Nawabpet": ["Aknapur","Arkathala","Attapur","Chinchelpet","Chittigidda","Dathapur","Ekmamidi","Gangeda","Gubbad fathepur","Kadcharla","Kojjavanampalle","Lingampalle","Madaram","Madireddipalle","Meenapallekalan","Mubarakpur","Nawabpet","Poolapalle","Pulumamidi","Vatti minapalle","Yavapur","Yellakonda"],
+"Pargi": ["Annaram","Babapur","Barkatpalle","Basireddipalle","Chigralpalle","Chityal","Gadsingapur","Govindapur","Gunjalapahad","Heerapur","Ibrahimpur","Jafferpalle","Kadlapur","Khudavanpur","Lakhanapur","Madharam","Malkaipet","Mittakodur","Nagulapalle","Narayanpur","Naskal","Nazeerabad","Pargi","Raghavapur","Ramreddipalle","Rangampalle","Rangapur","Rapole","Ravalpalle","Roopkhanpet","Rukumpalle","Shakapur","Sondepur","Sulthanpur","Syedmalkapur","Syedpalle","Tondapalle","Yabajiguda"],
+"Peddemul": ["Adkicherla","Athakur","Bairampalle","Buddaram","Duggapur","Gazipur","Girmapur","Gopalpur","Gotlapalle","Hanmapur","Indole","Indoor","Jangaon","Kandanelli","Khanapur","Kondapur","Madananthapur","Mambapur","Mansampalle","Marpalle","Nagulpalle","Pashapur","Peddemul","Ramachandrapur","Rampur","Regondi","Rudraram","Rukmapur","Tattapalle","Thimsanpalle"],
+"Pudur": ["Angadichittimpalle","Bakapur","Changomul","Cheelapur","Chintalapalle","Gangupalle","Ghatpalle","Kandlapalle","Kankal","Kervelli","Kodmoor","Kothapalle","Manchanpalle","Manneguda (paigah)","Manneguda (sarecas)","Medikonda","Medipalle kalan","Mirzapur","Mittakankal","Nizampet medipalle","Peddaumanthal","Pothireddiguda","Pudgurthy","Pudur","Quthbullapur","Rakamcherla","Regadimamidipalle","Sirgaipalle","Somangurthy","Thimmapur","Thippapur","Thirmalapur","Turkayenkepalle","Yenkepalle"],
+"Tandur": ["Allapur .s.","Antaram buzurg","Belkatur","Chandravancha","Chengeshpur","Chengole","Chintamanipatam","Chittighanapur","Eershetpalle","Elmakanna","Gingurthy","Gonur","Gopanpalle","Goutapur","Guntabachpalle","Inole","Jodandapur","Karankote","Khanjampur","Konapur","Kotbaspalle","Kothlapur khurd","Machanoor","Malkapur","Mittabachpalle","Narayanpur","Ogipur","Parwathapur","Rampur","Sangam kalan","Shankarreddipalle","Tandur","Veeredpalle"],
+"Vikarabad": ["Ainapur","Athvelly","Burgupalle","Burhanpalle","Chiltampalle","Dhannaram","Dyacharam","Girgetpalle (r)","Godamguda","Gottimukla","Gudpalle","Kamareddiguda","Kompalle","Machanpalle","Madanpalle","Madgul chittempalle","Madharam","Mailardevrampalle","Narayanapur","Pathur","Peelaram","Peerampalle","Pendlimadgu","Phulmaddi","Pulusumamidi","Sidloor (chenchelam)","Sidloor mungal","Sidloor paigah","Surpanpalle","Vikarabad","Yerravally","Zaidupalle"],
+"Yelal": ["Achuthapur","Adhalipur","Agnoor","Amberpet","Annasagar","Banapur","Bennur","Bhagaipalle","Bijwar","Bonkoor","Chennaram","Devanoor","Doulapur","Gangasagar","Girijapur","Gorepalle","Hajipur","Jakkepalle","Juntpalle","Kamalapur","Khanjapur","Kishtapur","Kokat","Lakshminarayanapur","Mazrasangam","Muddaipet","Mukundapur","Nagasamundar","Pagdial","Payarkampalle","Raghapur","Rasnam","Rasoolpur","Thimmaipalle","Viswanathpur","Yelal","Yenkapalle"],
+"Ananthagiri": ["Anantha giri","Chanu pally","Gondriyala","Khana puram","Lakmavaram","Palaram","Singavaram","Tiru annaram","Tripuravaram","Yasanthapuram"],
+"Atmakur (s)": ["Aipoor","Atmakur","Bopparam","Dacharam","Enubamla","Gattikal","Gollaguda","Isthalapuram","Kandagatla","Kotapahad","Maktha kotha gudem","Midthan palle","Mukkudu devulapalli","Narayanagudem","Naseempet","Nemmikal","Patharla pahad","Setti gudam","Thummalapen pahad","Venkatapuram"],
+"Chilkur": ["Bethavole","Chilkur","Konda puram","Paleannaram"],
+"Chinthalapalem": ["Adlur","Chinthalapalem","Chintriyala","Donda padu","Gudimalkapuram","Nemalipuri","N-f","Reballe","Thammaram","Vajinepalle","Vellatur"],
+"Chivemla": ["Ailapur","Beebiguda","Chendupatla","Chivvemla","Duraj palle","Gayamvari guda","Gumpula","Gunjaloor","Kudakuda","Thimma puram","Thirumalagiri","Tuljarao pet","Undrugonda","Vallabhapuram","Vattikhammam pahad"],
+"Garidepally": ["Gaddipalle","Ganugabanda","Garidepalle","Kalmala chervu","Kaluvapalle","Kuthubshapuram","Ponugodu","Rayangudem","Sarvaram","Tallamalkapuram","Velidanda"],
+"Huzurnagar": ["Amaravaram","Burugadda","Huzurnagar","Lakkavaram","Lingagiri","Machavaram","Yepalasingaram"],
+"Jajireddygudem": ["Adivemula","Bollam palle","Jajireddy gudem","Kasarla pahad","Kesaram","Kodoor","Kommala","Kunchamarthi","Parsai palle","Thimmapuram","Uyyalawada","Velpu cherla"],
+"Kodad": ["Chimiryala","Dorakunta","Ganapavaram","Gudibanda","Kapugallu","Kodad (ct)","Komarabanda","Kuchipudi","Redla kunta","Tammara bandapalem","Thogarrai","Yerravaram"],
+"Maddirala": ["Chandu patla","Chinna nemila","Ganjivari kothapalle","Gorentla","Gummadavally","Kukkadam","Kunta palle","Maddirala","Mamindla madava","Mukundapuram","Polumalla","Ramachandrapuram","Reddiguda"],
+"Mattampally": ["Allipuram","Chennaipalem","Choutapalle","Gundla palle","Mattam palle","Mattapalle","N-f","Peddaveedu","Raghunadhapalem","Vardhapuram","Yatavakilla"],
+"Mellachervu": ["Kandibanda","Mella cheruvu","Revuru","Yepalamadhavaram"],
+"Mothey": ["Annarigudem","Burkacharla","Gopalapuram","Hussainabad","Kudali","Mamillagudem","Mothey","Namaram","Nereduavai","Raavi pahad","Raghavapur","Sarvaram","Singarneni palle","Sirikonda","Thummala palle","Urlugunda","Vibhalapur"],
+"Munagala": ["Akupamula","Barakatha gudem","Ganapavaram","Kalakova","Kokkireni","Madhavaram","Munagala","Nelamarri","Repala","Syed muzavarpeta","Tadvai"],
+"Nadigudem": ["Brundavanapuram","Chakirala","Eklashkhanpet","Kagitha rama-chandrapuram","Karivirala","Nadigudem","Rama puram","Ratnavaram","Siripuram","Tellabali","Valla puram"],
+"Nagaram": ["Chenna puram","Devaraneni kotha palle","Etoor","Laxmapur","Mamidi palle","Nagaram","Pasnoor","Pasthala","Phanigiri","Vardaman kota"],
+"Nereducherla": ["Bodaladinna","Chillepalle","Dacharam","Dirsencherla","Fathepuram","Janala dinne","Kallur","Kalvaladinna","Medaram","Neredcherla","Penchikaladinne","Somaram","Yellaram"],
+"Nuthanakal": ["Bhikumalla","Chilpa kunta","Dirisana palle","Gundla singaram","Lingam palle","Machan palle","Mediguda","Miryala","Noothankal","Peddanemali","Talla singaram","Venke palle","Yadavelly","Yerra pahad"],
+"Palakeedu": ["Alangapuram","Bothalapalem","Guduguntla palem","Gundeboina gudem","Gundlapahad","Janapahad","Komatikunta","Mahankali gudem","Musivoddusingaram","Palakeedu","Ravipahad","Sajjapuram","Sunya pahad","Yellapuram"],
+"Penpahad": ["Anajipuram","Anatharam","Bhakthalapuram","Cheedella","Dharmapuram","Dosapahad","Dupahad","Gajulamalkapuram","Lingala","Macharam","Mohammadapuram","N.annaram","Nagulapahad","Penpahad","Potla pahad","Rajpet","Singareddy palem"],
+"Suryapet": ["B dhacharam","B venkatrampuram","Balemla","Circlepet","Imampet","Kasarabad","Kesaram (og) (part)","Kesaram (part)","Konkathimmani","Pillala marri (part)","Pillalamarri (og) (part)","Pinnai palem","Ramachandra puram","Ramannaguda","Ramavaram","Solipet","Suryapet","Tekumatla","Thalla khammampahad","Yendla palle","Yerkaram"],
+"Thirumalagiri": ["Anantharam","Bandla palle","Gundepuri","Jalal puram","Mali puram","Mamidiyala","Nanda puram","Sidda samudram","Thati pamula","Thirumalgiri","Thonda","Velichala"],
+"Thungaturthy": ["Annaram","Bandaramaram","Ganugubanda","Gottiparthi","Karivirala","Keshava puram","Manapur","Ravula palle","Sangam","Thungathurthi","Velug palle","Vempati"],
+"Banswada": ["Banswada (ct)","Borlam","Budmi","Chinna nagaram","Chinna rampur","Chintal nagaram","Desaipet","Hanmajipet","Ibrahimpet","Khadlapur","Kollur","Konapur","Pocharam","Sangojipet","Singaraipalle","Someshwar","Tadkole","Tirmalapur","Vasudevpalle"],
+"Bhiknoor": ["Anthampalle","Baswapur","Bhagirathipalle","Bhiknoor","Gurjakunta","Isannapalle","Jangampalle","Kachapur","Kancherla","Laxmidevipalle","Mallupalle","Peddamallareddy","Rameshwarpalle","Ryegatlapalle","Tippapur"],
+"Bibipet": ["Bibipet","Issanagar","Jangaon","Konapur","Malkapur","Mohammadapur","Ramchandrapur","Ramreddipalle","Siribibipet","Tujalpur","Yadaram"],
+"Bichkunda": ["Bandaranjal","Bichkunda","Chinna devada","Chinna dhadgi","Dowlatapur","Fathlapur","Gopanpalle","Gundekalloor","Gundenamali","Hasgul","Kandarpalle","Khatgaon","Lingapur","Malkapur","Malkapur (kodapgalpatti)","Manyapur","Meka","Mishankallali","Pedda devada","Pedda dhadgi","Pedda takkadpalle","Pulkal","Rajapur","Rajola","Seetarampalle","Shantapur","Shetloor","Sirsamundar","Wajidnagar"],
+"Birkur": ["Bairapur","Barangedgi","Birkoor","Chincholi","Chinna annaram","Chinna damarancha","Kishtapur","Mallapur","Nagapur","Pedda damarancha","Sambapur","Sultanpur","Timmapur","Veerapur"],
+"Domakonda": ["Ambarpet","Anchanur","Chintamanpalle","Domakonda","Kundaram","Lingupalle","Mutyampet","Sangameshwar","Sitarampalle","Sitarampur"],
+"Gandhari": ["Bangarwadi","Boppajiwadi","Brahmanpalle","Burgul","Chedmal","Chinnapur","Durgam","Gandhari","Gandivet","Gujjul","Gurjal","Juvvadi","Karakwadi","Katewadi","Konaipalle","Madholi","Mathsangam","Medpalle","Naglur","Narsapur (mudholi)","Neral","Pedda gouraram","Petasangam","Pothangal (kalan)","Pothangal (khurd)","Ramalakshmanpalle","Sarvapur","Sithaipalle","Somaram","Thimmapuram","Tipparam","Vandrikal","Venkatapur"],
+"Jukkal": ["Bangarpalle","Baswapur","Bijjalwadi","Chandegaon","Chinna edgi","Chinna ghulla","Dongaon","Dostpalle","Gundoor","Hangarga","Jukkal","Kanthali","Kathalwadi","Khanapur","Khandeballoor","Khemraja kallali","Kowlas","Ladegaon","Longaon","Madhapur","Mohammadabad","Nagalgaon","Padampalle","Pedda edgi","Pedda ghulla","Rudrapahad","Siddapur","Sopur","Wajrakhandi"],
+"Kamareddy": ["Adloor","Chinna mallareddy","Devanpalle","Elichpur","Gargul","Gudem","Isrojiwadi","Kamareddy","Kothalpalle","Kyasampalle","Lingapur (r)","Lingayapalle","Narasannapalle","Patharajampet","Raghavapur","Rameswarpalle","Sarampalle","Shabdipur","Tekriyal","Thimmakkapalle_1","Thimmakkapalle_2","Uggrawai"],
+"Lingampet": ["Banapur","Bayampalle","Bhavanipet","Bonal","Jaldipalle","Kanchmahal","Kannapur","Kondapur","Korpole","Lingampalle (khurd)","Lingampet","Mangaram","Mombajipet","Motha","Nagaram","Nallamadugu","Perumalla","Polkampet","Pothaipalle","Rampur","Shatpalle","Shetpalle","Yellaram"],
+"Machareddy": ["Akkapur","Antampalle","Banda rameshwarpalle","Bhavanipet","Chukkapur","Devunipalle","Faridpet","Ghanpur (m)","Issaipet","Latchapet","Machareddy","Palwancha","Potaram","Rajkhanpet","Somarampet","Tadkapalle","Wadi","Yellampet","Yellapgonda"],
+"Madnoor": ["Antapur","Awalgaon","Chinna eklara","Chinna shekkarga","Chinna thadugur","Chinnapur","Dhannoor","Dhoti","Dongli","Elegaon","Enbhura","Gojegaon","Hajipur","Hassa takli","Keroor","Kharag","Kotchira","Kurla","Lachan","Lachmapur","Limboor","Madnur","Mahalsapur","Mahdan hipperga","Mainur","Mallapur","Marepalle","Mogha","Pedda eklara","Pedda shekkarga","Pedda takli","Pedda thadgur","Rachoor","Rusegaon","Salabathpur","Shekhapur","Sirpur","Somoor","Sonala","Sultanpet","Thadi hipperga","Wadi fathepur"],
+"Nagireddypet": ["Achaipalle","Akkampalle","Atmakur","Bollaram","Chinur","Dharmareddy","Golilingal","Jalalpur","Kannareddy","Lingampalle (kalan)","Malthummeda","Masanpalle","Matur","Nagireddypet","N-f","Pocharam","Raghavapalle","Ramakkapalle","Tandur","Vadalparthi","Venkampalle","Yerraram","Zapti jankampalle"],
+"Nasurullabad": ["Ankole","Baswaipalle","Bommandevpalle","Boppaspalle","Doulatapur","Durgampalle","Durki","Hajipur","Kamshetpalle","Mirzapur","Mylaram","Nachpalle","Namli","Nasurullabad","Poshetpalle","Sangam","Timmanagar"],
+"Nizamsagar": ["Achampet","Arepalle","Banjepalle","Boorgul","Brahmanpalle","Galipur","Gorgal","Gunkul","Hasanpalle","Jakkapur","Komalancha","Konampalle","Magi","Mallur","Mangloor","Maqdumpur","Narsapoor","Narsingraopalle","Narva","N-f_1","N-f_2","N-f_3","N-f_4","Raghavapalle","Rangapur","Sanivarpet","Shairkhanpalle","Singitham","Telagapoor","Tunkepalle","Turkapalle","Velugunur","Vengalampalle","Waddepalle"],
+"Pedda kodapgal": ["Anjani","Begumpoor","Burugupally","Chinna takkadpalle","Jagannathapalle","Kaslabad","Lingampally","Mailar","Pedda kodapgal","Pocharam","Savargaon","Shivapoor","Tupdal (kowlasa)","Vadlam"],
+"Pitlam": ["Allapur","Bandapalle","Bollakpalle","Brahmanpalle","Burnapur","Chillangi","Chinna gouraram","Chinna kodapgal","Dharmaram","Godamgaon","Hasnapur","Karegaon","Katepally","Khambapur","Kishtapur","Koranpalle","Kurthi","Maddelchervu","Mardanda","Nagampalle","Paredpalle","Pedda annaram","Pedda rampur","Pitlam","Pothreddypalle","Siddapur","Sonpet","Thimmanagar"],
+"Rajampet": ["Argonda","Gundaram","Kondapur","Peddapalle","Pondurthi","Rajampet","Siddapur","Talmadla"],
+"Ramareddy": ["Annaram","Ghanpur (r)","Gidda","Gollapalle","Issannapalle","Kannapur","Maddikunta","Moshampur","Posanipet","Radhaipalle","Ramareddy","Rangampet","Reddypet","Singaraipally","Uppalwai"],
+"Sadashivanagar": ["Adloor yellareddy","Amarlabanda","Bhoompalle","Dhaggi","Dharmaraopet","Jangaon","Kammajiwadi","Kolwaral","Kuprial","Lingampalle","Markhal","Modegaon","Mudhojiwadi","Padmajiwadi","Sadashiva nagar","Thimmajiwadi","Tirmanpalle","Tukkojiwadi","Uthnoor","Vajjepally (kalan)","Vajjepally (khurd)","Yacharam"],
+"Tadwai": ["Abdullanagar","Brahamajiwadi","Brahmanpalle","Chandapur","Chinna demi","Chityal","Devai palle","Endriyal","Kankal","Karadpalle","Kelojiwadi","Krishnajiwadi","Nandiwada","Pedda demi","Sangojiwadi","Santaipet","Somaram","Tadwai","Venkayalapalle","Yerrapahad"],
+"Yellareddy": ["Advilingal","Annasagar","Bhiknoor","Brahmanpalle","Daval malkapalle","Devanpalle","Gandimasanipet","Hajipur","Hemagiri","Jangamaipalle","Jankampalle (khurd)","Kottal","Laxmapur","Lingareddipet","Machapur","Mallaipalle","Mathadpalle","Mathmal","Misanpalle","Moulanakhed","Repallewada","Rudraram","Safdarpur","Sivapur","Somawarpet","Timmapur","Timmareddy","Vellutla","Venkatapur","Venkatapur (agraharam)","Yellareddy (ct)"],
+"Chennaraopet": ["Akkalchedu","Chennaraopet","Jhalli","Konapuram","Lingagiri","Lingapuram","Papaiahpeta","Thimmarainipahad","Upparapalle","Yellaigudem"],
+"Duggondi": ["Adavi rangapur","Chalparthi","Duggondi","Keshwapur","Laxmipur","Madhira mandapalle","Mahammadapur","Mallampalle","Mandapalle","Muddunoor","Nachinapalle","Polaram","Ponakal","Reballe","Rekampalle","Timmampet","Togarrai","Venkatapur"],
+"Geesugonda": ["Anantharam","Bodduchintalapalle","Dharmaram (og)","Elkurthy","Geesugonda","Gorrekunta (ct)","Kommala","Machapur","Manugonda","Mogilicherla","Ookal (h)","Potharajpalle","Ramachandrapur","Shayampet","Vanchangiri","Viswanathpur"],
+"Khanapur": ["Ainepalle","Budharaopet","Dabeerpet","Dharmaraopet","Jalubanda","Khanapur","Kothur","Mangalavaripet","Matuveeraram","Pakhalashoknagar","Pocharam","Ragampet","Rangapur","Thungabandam"],
+"Khila warangal": ["Allipur","Bollikunta","Gadepalle","Mamnoor (ct)","Nakkalapalle (og)","Stambampalle (og)","Thimmapur (haveli) (r ) (og)","Vasanthapur (og)"],
+"Nallabelli": ["Arshanpalle","Asaravelli","Govindapur","Gundlapahad","Kannaraopet","Kondapur","Lenkalpalle","Medapalle","Muchimpula","Nagrajpalle","Nallabelly","Nandigama","Narakkapet","Rampur","Ramteertham","Rangapuram","Relakunta","Rudragudem","Shanigaram"],
+"Narsampet": ["Bhanjipet","Gurijala","Itikalpalle","Kammepalle","Laknepalle","Madannapet","Madhira (d)","Maheshwaram","Makdumpuram","Muthojipet","Narsampet (ct)","Paspunur","Rajupet","Ramavaram","Sarwapur"],
+"Nekkonda": ["Alamkhanipet","Ameenabad","Appalaraopet","Bollikonda","Chandrugonda","Chinnakorpole","Deekshakunta","Gotlakonda","Gundrepalle","Mudigonda","Nagaram","Nekkonda","Panikera","Pathipaka","Peddakorpole","Redlawada","Suripalle","Topanpalle","Venkatapur"],
+"Parvathagiri": ["Annaram sharif","Burugamadla","Chinta nekkonda","Choutapalle","Enugal","Gopanapalle","Kalleda","Konkapaka","Parvathagiri","Ravoor","Rollakal","Somaram","Vadlakonda"],
+"Rayaparthy": ["Burahanpalle","Gannaram","Gattikal","Jagannadhapalle","Katrapalle","Keshavapur","Kolanpalle","Kondapur (p.r)","Konduru","Kothur","Muripirala","Mylaram","Ookal (p.r)","Perikaid","Pothureddipalle","Raiparthy","Sannur","Thirmalapalle"],
+"Sangem": ["Chintalapalle","Elugur( rangampet)","Gavicherla","Kapulakanaparthy","Katrepale(haveli)","Lohitha","Mondrai","Mummadivaram","Nallabelle","Narlavai","Pallaruguda","Ramachandrapur","Sangam","Shapur","Theegarajupalle","Thimmapur","Venkatapur (haveli)"],
+"Wardhannapet": ["Bandauthapur","Chennaram","Dammannapet","Divitipalle","Katrial","Kothapalle","Liabarthy","Nallabelle","Ramavaram","Upprapalle","Wardhannapet","Yellanda"],
+"Athmakur": ["Agrampahad","Atmakur","Brahamanpalle","Choudla palle","House buzurg","Kamaram","Katakshapur","Kothagattu","Mustyalpalle","Neerukulla","Peddapur","Penchikalpet"],
+"Bheemadevarpalli": ["Bheemadevarpalle","Gatlanarsingapur","Koppur","Kothakonda","Kothapalle","Mallaram","Manikyapur","Mulkanoor","Musthafapur","Mutharam (p.k)","Ratnagiri","Vangara"],
+"Damera": ["Damera","Kogilvai","Ladalla","Malakpet","Oblapur","Oorugonda","Pasargonda","Pulkurthi","Singarajupalle","Venkatapur"],
+"Dharmasagar": ["Devnoor","Dharmsagar","Elkurthy","Jhanakipur","Kyathampalle","Mupparam","Narayanagiri","Peddapendyal","Somadevarapalli","Thatikayala","Unikicherla (og)"],
+"Elkathurthy": ["Baopet","Damera","Dandepalli","Elkathurthi","Gopalpur","Jeelgul","Keshwapur","Kothulnaduma","Penchikalapeta","Suraram","Thimmapur","Vallabhapur","Veeranarayanapur"],
+"Hanamkonda": ["Enumamula (ct)","Gopalpur (og)","Kumarpalle (r)","Palivelpula","Waddepally","Warangal","Warangal (m.corp. + og) (part)"],
+"Hasanparthy": ["Ananthasagar","Arvapalle","Bhimaram (ct)","Chinthagattu (og)","Devannapet","Hasanparthy (og)","Jaigiri","Kothapet","Laknavaram (d)","Madipalle","Mallareddipalle","Mutcherla","Nagaram","Paidipalle","Pegadapalle (og)","Pembarthy","Siddhapoor","Sudanpalle","Vangapahad","Yellapur"],
+"Inavole": ["Dharmapur","Garmillapalle","Inavole","Kakkiralapalli","Kondaparthy","Malakpalli","Nandanam","Panthini","Punnole","Singaram","Vanamalakanapatrthy","Venkatapuram"],
+"Kamalapur": ["Ambala","Bhimpalle","Desharajpalle","Gudur","Gunded","Guniparthi","Jujnoor","Kamalapur","Kaniparthi","Kannur","Madannapeta","Marripalligudem","Nerella","Sanigaram","Uppal","Vangapalle"],
+"Khazipet": ["Ammavaripet","Battupalli","Kadipikonda (ct)","Kothapalli","Madikonda (og)","Rampur","Tharalapalle"],
+"Nadikuda": ["Cherlapalle","Choutparthi","Dharmaram","Kantathmakur","Kowkonda","Mustyalpalle","Nadikuda","Narlapur","Puligilla","Raiparthy","Sarvapur","Varikole"],
+"Parkal": ["Kamareddipalle","Laxmipuram","Madharam","Mallakpet","Nagaram","Paidipalle","Parkal","Pocharam","Rajipet","Vellampalle","Venkatapur"],
+"Shayampet": ["Gatlakaniparthy","Hussainpalle","Katrapalle","Koppula","Mylaram","Neredpalle","Pattipaka","Pedda kodepaka","Shayampet","Singaram (dongala)","Singaram (kothagutta)","Taharapur","Vasanthapur"],
+"Velair": ["Erraballe","Gundlasagar","Kannaram","Mallikudurla","Peechera","Sodashapalli","Velair"],
+"Bachupally": ["Bachupally","Nizampet (og)"],
+"Gandimaisamma dundigal": ["Bahadurpalle (og)","Bowrampet (og)","Dommara pochampalle (og)","Dulapalle (og)","Dundigal (ct)","Gagilapur (og)","Ghmc (m corp. + og) (part)_1","Ghmc (m corp. + og) (part)_2","Kompally","Mallampet (og)","Nagaloor","Secunderabad (cb)","Shambipur"],
+"Ghatkesar": ["Ankushapur","Annojiguda","Aushapur","Badesahebguda","Edulabad","Ghatkesar (ct)","Ismailkhanguda","Kachwanisingaram","Kondapur","Korremul","Madharam","Majarguda","Muthawalliguda","Padamatisaiguda","Pocharam","Prathapsingaram","Yamnampet"],
+"Keesara": ["Ahmedguda","Bogaram","Cheeryal","Dharmaram","Ghmc (m corp. + og) (part)","Godumakunta","Haridaspally","Keesara","Keesara daira","Kundanpalle","Nagaram (ct)","Narsampally","Rampally","Thimmaipally","Yadgarpally (east)","Yadgarpally (west)"],
+"Medchal": ["Akbarjapet","Athwelli","Bandakunta","Bandamadaram","Dabilpur","Ghanpur","Girmapur","Gosaiguda","Gowdavelli","Gundlapochampally","Kandlakoya","Khajiguda","Konaipally","Maisireddypally","Medchal (ct)","Muneerabad","Nuthankal","Pudur","Railapur","Raj bollaram","Ravlkole","Shahajadiguda","Somaram","Srirangavaram","Suthariguda","Velgalkunta","Yellampet"],
+"Medipally": ["Boduppal (ct)","Chengicherla (og)","Ghmc (m corp. + og) (part)","Gulam aliguda","Medipally","Miyapur (og)","Narepalle (og)","Parvatapur","Peerzadiguda"],
+"Muduchinthalapally": ["Adraspally","Anantharam","Chinaparvathapur","Jaggamguda","Kesavapur","Keshawaram","Kolthur","Lakshmapur","Lingapur","Mooduchintalaphally","Nagisettipally","Narayanpur","Potharam","Sampanbole","Uddemarry","Usharpally","Yakutpur"],
+"Shamirpet": ["Aliabad","Anthaipally","Bommaraspet","Devaryamjal","Jawaharnagar (ct)","Lalgadimalakpet","Majeedpur","Mandaipally","Muraharipally","N-f","Ponnal","Pothaipally","Shamirpet","Singaipally","Thumkunta","Turkapally","Yadaram"],
+"Eturunagaram": ["Akulavari ghanpur","Allamvari ghanapuram","Alugubelle","Banaji bandham","Buttaram","Chalpaka","Chinaboinapalle","Chinavenkata puram","Chintagudem","Chirragudem","Dodla","Ekkela","Elishettipalle","Eturnagaram","Gogubelle","Gundenguvai","Kondai","Koratpalle (d)","Kothagudem","Lingapuram","Mallyala","Manasapalle","Medaram","Mullakatta","N-f","Oddugudem","Papkapuram","Pedda venkatapur","Raigudem","Ramannagudem","Ramnagar (koyagudem)","Roheer","Shankarajpalle","Shapalle","Shivapuram","Teegalvai","Yellapuram"],
+"Govindaraopet": ["Bussapur","Chalwai","Dammakkapalle","Kannaigudem","Karlapalle","Laknavaram","Machchapur","Medaram (patti chelva)","Motlagudem","Muthapur","Pasranagaram","Rampur","Rangapur","Venkatapur"],
+"Kannaigudem": ["Andukapalle","Bhupathipuram","Buttaigudem","Chinthagudem","Chityala","Devadhumula","Etur","Gangaram(guttala)","Gangugudem","Gurrevula","Ilapur","Kannaigudem","Kanthanpalle","Kondred","Kothur","Laxmipuram","Malkapalle","Maredupaka","Marepalle","Muppanapalle","N-f_1","N-f_2","Padigapuram","Paredu","Rajannapet","Rampur","Rampuragrahar","Sarvai","Singaram (pattigorrevula)","Thupakulagudem"],
+"Mangapet": ["Akinepalle mallaram","Bandarugudem","Barlagudem","Brahmanapalle","Cherupalle","Chunchupalle","Domeda","Gollagudem","Kamalapuram (ct)","Kathigudem","Komatipalle","Lodukgudem","Mallur","Mangapet (podmur)","Narsapur (mangapet)","Narsimhasagar","Poredupalle","Rajupet","Ramachandrunipet","Ramanakkapet","Thimmampet","Tondyala laxmipur","Wadagudem"],
+"Mulug": ["Ankannagudem","Annampalle","Bandarupalle","Incherla","Jaggannapet","Jakaram","Kannaigudem","Kasimdevipet","Kothur","Madanapalle","Mallampalle","Mulug","Pathepalle","Pegadapalle","Potlapur","Ramachandrapuram","Ranabandala (d)","Sarvapuram"],
+"Tadvai": ["Adhervai","Alligudem","Ankampalle","Annaram","Ashannagudem yellapur","Banjarellapur","Bayyakkapet","Beerelli","Bhupatipuram","Bittupalle (p.l)","Bodigudem","Bollepalle (p.l)","Bondal","Budigavanipahad","Chennapuram","Chintalakatapur","Chowled","Damervai","Durgaram","Elbaka","Gangaram (p.a)","Gonepalle","Gopaigudem (p.a)","Gouraram (p.a)","Immadigudem","Jampangavai","Kalvapally","Kamaram (p.a)","Kamaram (p.t)","Kamsettigudem","Kanneboinapalle","Katapuram","Katnarsapuram","Keshavapoor","Kistapuram","Kondaiguda","Kondalanagaram","Kondaparthi","Kothagudem (p.l)","Kothur (pattipangidi)","Kousettivai","Lavval","Laxmipuram (p.a).","Lingala","Maredigudem","Medaram (d)","Medaram (sammakkajatara)","Motlagudem","Narlapur","Narsapur (p.a)","Narsapur (p.l)","N-f_1","N-f_2","N-f_3","Nimmagudem","Nimmakayala nagaram","Oorattam","Padigapuram (p.a.)","Padigapuram (p.p)","Pambapuram","Pocha palle","Ramannagudem","Rampur (p.a)","Rangapuram (p.a)","Sattaram","Serigaram","Somaigudem","Tadvai","Thakkallagudem","Timmanitogu","Uppukunta","Vaddagudem (p.l)","Veerapuram","Vengalapuram","Venkannagudem","Waddegudem"],
+"Venkatapur": ["Adavirangapur","Bandlapahad","Laxmidevipeta","Nallagunta","Narasapuram","Palampeta","Ramanathapalle","Ramanujapuram","Thimmapur","Venkatapur"],
+"Venkatapuram": ["A. kathigudem","Alligudem (g)","Alubaka [g]","Alubaka [z]","Ankannagudem(z)","Bandagudem (g)","Bandarugudem","Bandarupalle (g)","Barlagattugudem (z)","Barlagudem (g)","Barlagudem (z)","Bodapuram [g]","Bollaram [z]","Burugudem(z)","Chalamala (g)","Chinagangaram (g)","Chinneda [g]","Chinneda [z]","Chirtapalle (g)","Chirutapalle (z)","Desarajupalle (g)","Desarajupalle (z)","Doli(g)","Edhira [g]","Ippagudem (z)","Ippagudem [g]","Ippapuram [g]","K.kondapuram [z]","Kalipaka [g]","Kondapuram [z]","Kothagudem (g)","Koyabestagudem (g)","Mahitapuram (g)","Mahitapuram (z)","Mallapuram (g)","Mallapuram (z)","Marikala (g)","Marikala (z)","Marrigudem (z)","Morram vanigudem [g]","Mukunuru (g)","Nallaguntapalle [z]","Narsireddigudem (g)","Narsireddigudem (z)","N-f_1","N-f_2","Nuguru(g)","Nuguru(z)","Ontichintalagudem [g]","Palem (g)","Palem (z)","Pamunoor","Pujarigudem [z]","Punem veerapuram (g)","Punem veerapuram (z)","Rachapalle (g)","Ramannagudem [z]","Ramavaram (g)","Ramavaram (z)","Sarakalanka","Sudibaka (g)","Sudibaka (z)","Suraveedu [g]","Suraveedu [z]","Tadapala (g)","Taniparthy [g]","Uppedu (z)","Uppedu veerapuram (z)","Veerabhadraram (z)","Veerapuram (z)","Venkatapuram(g)","Venkatapuram(z)","Wadagudem (g)","Wadagudem (z)","Zella (g)"],
+"Wajedu": ["Annavaram (g)","Arguntapalle (g)","Arguntapalle (z)","Arlagudem (g)","Arlagudem (z)","Arunachalapuram","Ayyavaripeta (g)","Ayyavaripeta (z)","Bhuvanapalle","Bijenapalle","Bommanapalle (g)","Chandrupatla (z)","Cheekupalle (z)","Cherukur (g)","Cherukur (z)","Chinnagollagudem (z)","Chintoor (g)","Chintoor (z)","Dharmavaram","Dulapuram(g)","Edjarlapalle (g)","Edjarlapalle (z)","Ghanapuram (z)","Ghattuveerapuram (z)","Gummadidoddi(g) chalka","Gummadidoddi(z)","Ippagudem(g)","Janagalapalle (g)","Kacharam (g)","Kadekal (g)","Kadekal (z)","Kongala (g)","Koppusuru","Korakal (z)","Koyaveerapuram (g)","Krishnapuram (g)","Lakshmipuram","Lalpet (g)","Lingapeta (z)","Morumuru (g)","Morumuru (z)","Mulkanapalle (g)","Mutharam chowk","Nagaram (g)","N-f_1","N-f_2","N-f_3","N-f_4","Padigapuram(z)","Peddagangaram (z)","Peddagollagudem (g)","Peddagollagudem (z)","Penugolu (g)","Peruru (g)","Peruru (z)","Pragallapalle (z)","Pusur (z)","Pusur patch - i","Pusur patch - ii","Rampuram","Tekulagudem (z)","Tekulagudem- chalk- i","Tekulagudem chalk-ii","Wazeed(g)"],
+"Damargidda": ["Annasagar","Ashanpalle","Ayyawaripalle","Bapanpalle","Chakalavaripalle","Damaragidda","Desaipalle","Gadimunkanpalle","Gadpa","Kamsanipalle","Kandanpalle","Kanukurthy","Kyatanpalle","Laxmipur","Lingareddipalle","Lokurthy","Malreddipalle","Mogalamadka","Narsapur","Piddampalle","Sajnapur","Suddavanda","Udmalgidda","Ulligundam","Vathugundla","Vithalapur","Yelsanpalle"],
+"Dhanwada": ["Dhanwada","Gotur","Gunmukla","Kamsanpalle","Kistapur","Kondapur","Mandipalle","Pathapalle","Yamnanpalle"],
+"Kosgi": ["Amlikunta","Appaipalle","Balabhadraipalle","Bhakthimalla","Bhogaram","Bijjaram","Chandravancha","Chennaram","Ejipoor","Gundmal","Hakimpeta","Kadampalle","Kosgi","Kothapalle","Lodhipur","Mirzapur","Mudireddipalle","Mukthipahad","Mukthyarnagar","Mungimalla","Mushrifa","Nacharam","Polepalle","Sarangaraopalle","Sarjakhanpet","Thogapur"],
+"Krishna": ["Adivikhanapur","Ainapur","Alampalle","Chegunta","Gudebellur","Gurujala","Hindupur","Khalhalli","Kunsi","Kusumurthy","Mudumal","Muraharidoddi","Shukurlingampalle","Thangadigi"],
+"Maddur": ["Allipur","Boneed","Chanwar","Chenreddipalle","Chintaldinne","Damaganpuram","Dorepalle","Duppatghat","Gokulnagar","Jadavaraopalle","Kajipuram","Kommur","Kothapalle","Lakkaipalle","Lingalched","Maddur","Malikjadavarao palle","Mannapur","Mominapur","Nagireddipalle","Nandigam","Nandipahad","Nidjinta","Pallerla","Parsapuram","Peddapur","Pedripahad","Renvatla","Thimmareddipalle","Veeraram"],
+"Maganoor": ["Adivisatyavaram","Bhairampalle","Gajarandoddi","Gururaolingampalle","Kolpur","Kothapalle","Lachampur","Maganoor","Mandipalle","Mudumaldoddi","Neradgam","Oblapur","Parmandoddi","Pegadabanda","Punjanur","Thalankeri","Ujjelli","Wadwat","Warkoor","Yabandoddi"],
+"Makthal": ["Anugonda","Bhagvanpalle","Bhoothpur","Bondalkunta","Chandapur","Chinnagopalapur","Chityal","Dasardoddi","Golpalle","Gudigandla","Gurlapalle","Jaklair","Jawlapur","Kachwar","Kamathnarva","Kamatpulmamidi","Karni","Katrevpalle","Khanapur","Kondadoddi","Krishnasamudram","Lingampalle","Madhawar","Makthal","Manthangoud","Musalaipalle","Mustipalle","Panchadevupad","Panchalingal","Pareval","Paspul","Rudrasamudram","Sangambanda","Satyawar","Tekulpalle","Thirumalapur","Upparapalle","Yernaganpalle"],
+"Marikal": ["Chittanur","Eklaspur","Ibrahimpatnam","Jinnaram","Kanmanoor","Madwar","Marikal","Pasalpad","Paspul","Peddachintakunta","Rakonda","Teelair","Venkatapur","Yeligandla"],
+"Narayanpet": ["Abhangapur","Ammireddipalle","Anthwar","Appakapalle","Appireddipalle","Ayyawaripalle","Bhairamkonda","Boinpalle","Bommanpad","Chinnajatram","Eklaspur","Gurlapalle","Jajapur","Jalalpur","Kavarampalle","Kollampalle","Kondareddipalle","Kotakonda","Kothapalle","Lingampalle (kollampalle)","Narasappapalle","Narayanpet","Perapalla","Seranpalle","Singar","Thirumalapur"],
+"Narwa": ["Appampalle","Bekkarapalle","Jakkenapalle","Jangamreddipalle","Kalwal","Kothapalle","Kumarlingampalle","Lakkerdoddi","Lankal","Nagireddipalle","Narva","Patherched","Peddakadmur","Raikode","Rajapalle","Rampur","Seepur","Undekode","Yamki","Yellampalle"],
+"Utkoor": ["Aminpur","Bapur","Bijwar","Chinnaporla","Dantanpalle","Edavalli","Garanhalli","Jeeramhalli","Kollur","Laxmipalle","Mallepalle","Nagireddipalle","Nidugurthi","Oblapur","Pagidimarri","Pallekunta","Peddajatram","Peddaporla","Pulmamidi","Samanur","Samistapur","Someshwarbanda","Thipraspalle","Thirumalapur","Utkoor","Vallampalle","Venkatapur","Yergatpalle"]
+
+            // Add more mandals and their villages as needed
+        };
+
+        function updateMandals() {
+            const districtSelect = document.getElementById("district");
+            const mandalSelect = document.getElementById("subcategory");
+            const selectedDistrict = districtSelect.value;
+
+            mandalSelect.innerHTML = '<option value="">Click to Select</option>';
+            if (selectedDistrict) {
+                mandals[selectedDistrict].forEach(mandal => {
+                    const option = document.createElement("option");
+                    option.value = mandal;
+                    option.textContent = mandal;
+                    mandalSelect.appendChild(option);
+                });
+            }
+            updateVillages(); // Clear villages when district changes
+        }
+
+        function updateVillages() {
+            const mandalSelect = document.getElementById("subcategory");
+            const villageSelect = document.getElementById("village");
+            const selectedMandal = mandalSelect.value;
+
+            villageSelect.innerHTML = '<option value="">Click to Select</option>';
+            if (selectedMandal) {
+                villages[selectedMandal].forEach(village => {
+                    const option = document.createElement("option");
+                    option.value = village;
+                    option.textContent = village;
+                    villageSelect.appendChild(option);
+                });
+            }
+        }
+   
+
+        // DSE NAMES FUZZY SEARCH
+        const names = ["YELPULA Rajesh Kumar","YASARENI NARSIMHULU","YASARENI LAXMIPATHI","YAKUB. BAIG","YADAGIRI TARAKA","YADAGIRI MUTHJU","VUKANTI PRASAD","VIVARAMNENI SHRAVAN RAO","VISHWANATH TALLA","VISHNUVARDHAN REDDY GOVNI","Vishnu veeramalla","VINOD RAO MANDALA","VINOD KUMAR KODARI","ABDUL RAHEEM Mohammed",
+]; // Predefined list of names
+
+        function filterNames() {
+            const input = document.getElementById("search-name");
+            const filter = input.value.toLowerCase();
+            const nameList = document.getElementById("name-list");
+            const errorMessage = document.getElementById("error-message");
+
+            // Clear previous results
+            nameList.innerHTML = "";
+            errorMessage.textContent = ""; // Clear any previous error message
+
+            // Show the name list if there is input
+            if (filter) {
+                nameList.style.display = "block"; // Show the list
+
+                // Filter names based on input
+                const filteredNames = names.filter(name => name.toLowerCase().includes(filter));
+
+                // Append filtered names to the list
+                filteredNames.forEach(name => {
+                    const li = document.createElement("li");
+                    li.textContent = name;
+                    li.onclick = function() {
+                        selectName(name); // Select name when clicked
+                    };
+                    nameList.appendChild(li);
+                });
+
+                // Hide the list if no names match
+                if (filteredNames.length === 0) {
+                    nameList.style.display = "none"; // Hide if no matches
+                    showError("No matching names found."); // Show error message
+                }
+            } else {
+                nameList.style.display = "none"; // Hide list if input is empty
+            }
+        }
+
+        function selectName(name) {
+            document.getElementById("search-name").value = name; // Set input value to the selected name
+            document.getElementById("name-list").innerHTML = ""; // Clear the suggestion list
+            document.getElementById("name-list").style.display = "none"; // Hide the list
+            document.getElementById("error-message").textContent = ""; // Clear error message
+        }
+
+        function showError(message) {
+            const errorMessage = document.getElementById("error-message");
+            errorMessage.textContent = message; // Set the error message
+            // Optionally, you can clear the input field here if needed
+            // document.getElementById("search-name").value = ""; // Clear the input field
+        }
+        const items = ["5105", "5205", "5210", "5305", "5405", "3028EN 4WD", "3036E 4WD", "3036EN 4WD", "5036D", "5039D", "5042D", "5045D", "5045D 4WD", "5050D", "5050D 4WD", "5075E 4WD TremIV", "5105 4WD", "5210 4WD", "5310 2WD TREMIV", "5310 4WD TREMIV", "5310 PermaClutch", "5405 4WD TremIV", "Corn Header", "Heavy Duty  Rigid Cultivator", "Mini Cultivator", "Plough 2MB Ultra DLX_plow", "Rotary Tiller Heavy Duty","High Speed Planter HSP", "Rotary TillerLight Duty", "Rotary Tiller Mini Series", "Rotary Tiller Paddy Tiller 3000", "Rotary Tiller Standard Duty", "Round Baler"]; // Predefined list of items
+
+        function filterItems() {
+            const input = document.getElementById("search-item");
+            const filter = input.value.toLowerCase();
+            const itemList = document.getElementById("item-list");
+            const errorMessage = document.getElementById("item-error-message");
+
+            // Clear previous results
+            itemList.innerHTML = "";
+            errorMessage.textContent = ""; // Clear any previous error message
+
+            // Show the item list if there is input
+            if (filter) {
+                itemList.style.display = "block"; // Show the list
+
+                // Filter items based on input
+                const filteredItems = items.filter(item => item.toLowerCase().includes(filter));
+
+                // Append filtered items to the list
+                filteredItems.forEach(item => {
+                    const li = document.createElement("li");
+                    li.textContent = item;
+                    li.onclick = function() {
+                        selectItem(item); // Select item when clicked
+                    };
+                    itemList.appendChild(li);
+                });
+
+                // Hide the list if no items match
+                if (filteredItems.length === 0) {
+                    itemList.style.display = "none"; // Hide if no matches
+                    showItemError("No matching items found."); // Show error message
+                }
+            } else {
+                itemList.style.display = "none"; // Hide list if input is empty
+            }
+        }
+
+        function selectItem(item) {
+            document.getElementById("search-item").value = item; // Set input value to the selected item
+            document.getElementById("item-list").innerHTML = ""; // Clear the suggestion list
+            document.getElementById("item-list").style.display = "none"; // Hide the list
+            document.getElementById("item-error-message").textContent = ""; // Clear error message
+        }
+
+        function showItemError(message) {
+            const errorMessage = document.getElementById("item-error-message");
+            errorMessage.textContent = message; // Set the error message
+        }
+
+    </script>
+</body>
+</html>
